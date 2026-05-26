@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tesla SOTP — Morgan Stanley Valuation Model</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    background: #0a0e1a;
+    color: #e5e7eb;
+    padding: 16px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; color: #f9fafb; }
+  .subtitle { font-size: 13px; color: #9ca3af; margin-bottom: 20px; line-height: 1.6; }
+
+  /* Main two-column responsive layout */
+  .grid {
+    display: flex; flex-wrap: wrap; gap: 16px;
+  }
+  .grid > .panel {
+    flex: 1 1 480px;
+    min-width: 0;  /* allow shrinking inside flex */
+  }
+
+  .panel {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .panel h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #d1d5db;
+    margin-bottom: 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  /* Total bar — flex with wrap for mobile */
+  .total-bar {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    background: linear-gradient(90deg, #1e293b, #0f172a);
+    padding: 14px 18px; border-radius: 10px;
+    margin-bottom: 16px; border: 1px solid #334155;
+  }
+  .total-bar > div { flex: 1 1 160px; min-width: 0; }
+  .total-bar .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .total-bar .value { font-size: 28px; font-weight: 700; color: #f9fafb; margin-top: 2px; }
+  .total-bar .secondary-value { font-size: 20px; font-weight: 600; color: #f3f4f6; margin-top: 2px; }
+  .total-bar .change { font-size: 13px; margin-left: 8px; }
+  .change.up { color: #10b981; }
+  .change.down { color: #ef4444; }
+  .baseline { color: #6b7280; font-size: 11px; margin-left: 6px; display: inline-block; }
+
+  /* Chart container */
+  .chart-wrap { position: relative; height: 280px; max-height: 40vh; }
+  .chart-legend { margin-top: 12px; }
+  .legend-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; font-size: 13px; gap: 8px;
+    border-bottom: 1px solid #1f2937;
+  }
+  .legend-row:last-child { border-bottom: none; }
+  .legend-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; }
+  .legend-left span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .legend-right { font-weight: 600; color: #f3f4f6; white-space: nowrap; text-align: right; }
+
+  .seg-tabs {
+    display: flex; flex-wrap: nowrap; gap: 4px; margin-bottom: 14px;
+    background: #0f172a; padding: 4px; border-radius: 8px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .seg-tab {
+    flex: 1 0 auto; padding: 8px 12px; font-size: 12px;
+    background: transparent; border: none; color: #9ca3af;
+    cursor: pointer; border-radius: 6px; white-space: nowrap;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .seg-tab.active { background: #1e293b; color: #f9fafb; }
+  .seg-tab:hover:not(.active) { color: #d1d5db; }
+
+  .slider-group { margin-bottom: 16px; }
+  .slider-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    font-size: 12px; margin-bottom: 6px; gap: 8px; flex-wrap: wrap;
+  }
+  .slider-row .name { color: #d1d5db; font-weight: 500; flex: 1 1 auto; min-width: 0; }
+  .slider-row .val { color: #60a5fa; font-weight: 600; font-family: ui-monospace, monospace; flex-shrink: 0; }
+  input[type="range"] {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    height: 4px; background: #1f2937; border-radius: 2px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; background: #3b82f6;
+    border-radius: 50%; cursor: pointer;
+    border: 2px solid #0f172a;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; background: #3b82f6;
+    border-radius: 50%; cursor: pointer; border: 2px solid #0f172a;
+  }
+  .slider-help { font-size: 11px; color: #6b7280; margin-top: 4px; }
+
+  /* Segment header card */
+  .seg-header {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border-radius: 8px; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .seg-header .seg-h-left { flex: 1 1 auto; min-width: 0; }
+  .seg-header .seg-h-left .lbl { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+  .seg-header .seg-h-left .val { font-size: 22px; font-weight: 700; color: #f9fafb; margin-top: 2px; }
+  .seg-header .seg-h-right { text-align: right; flex-shrink: 0; }
+  .seg-header .seg-h-right .lbl { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+  .seg-header .seg-h-right .val { font-size: 18px; font-weight: 600; color: #f3f4f6; margin-top: 2px; }
+  .seg-header .pct { font-size: 12px; color: #9ca3af; margin-left: 6px; font-weight: 500; }
+
+  /* Status comparison badge */
+  .status-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 10px;
+    margin-left: 6px; font-family: ui-monospace, monospace;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .status-badge.now { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+  .status-badge.mult-up { background: #064e3b; color: #6ee7b7; border: 1px solid #047857; }
+  .status-badge.mult-down { background: #7c2d12; color: #fdba74; border: 1px solid #c2410c; }
+  .status-now-line {
+    font-size: 10px; color: #6b7280; margin-top: 4px; font-family: ui-monospace, monospace;
+    line-height: 1.4;
+  }
+
+  .global-bar {
+    background: #1e1b4b; border: 1px solid #312e81;
+    padding: 12px 16px; border-radius: 10px; margin-bottom: 16px;
+  }
+  .global-bar .slider-row .name { color: #c7d2fe; }
+
+  /* Flow diagram */
+  .flow {
+    display: flex; flex-direction: column; gap: 4px;
+    margin-top: 12px;
+  }
+  .flow-step {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: #0f172a; padding: 9px 12px; border-radius: 6px;
+    font-size: 12px; border: 1px solid #1f2937;
+    flex-wrap: wrap;
+  }
+  .flow-step .lbl { color: #9ca3af; flex: 1 1 auto; min-width: 0; }
+  .flow-step .res { color: #f9fafb; font-family: ui-monospace, monospace; font-weight: 600; text-align: right; flex-shrink: 0; }
+  .flow-arrow {
+    text-align: center; color: #475569; font-size: 12px; padding: 0;
+  }
+  .flow-final {
+    background: linear-gradient(90deg, #064e3b, #022c22);
+    border: 1px solid #10b981;
+  }
+  .flow-final .lbl { color: #6ee7b7; font-weight: 600; }
+  .flow-final .res { color: #fff; font-size: 13px; }
+
+  .reset-btn {
+    background: #1f2937; color: #d1d5db; border: 1px solid #374151;
+    padding: 7px 14px; border-radius: 6px; font-size: 12px;
+    cursor: pointer; margin-top: 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reset-btn:hover, .reset-btn:active { background: #374151; }
+
+  .formula-hint {
+    background: #0c1322; border-left: 3px solid #3b82f6;
+    padding: 10px 12px; border-radius: 4px;
+    font-size: 11px; color: #93c5fd;
+    margin-top: 12px; font-family: ui-monospace, monospace;
+    line-height: 1.6;
+    overflow-x: auto; white-space: nowrap;
+  }
+
+  /* Competitors section */
+  .competitors {
+    margin-top: 20px;
+  }
+  .comp-tsla-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border-radius: 7px;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, #1e293b, #0f172a);
+    border: 1px solid #475569;
+  }
+  .comp-tsla-row .comp-name { color: #f9fafb; font-weight: 600; font-size: 13px; }
+  .comp-tsla-row .comp-value { color: #f9fafb; font-weight: 700; font-size: 14px; font-family: ui-monospace, monospace; }
+  .comp-tsla-row .comp-tag {
+    font-size: 9px; background: #1e40af; color: #dbeafe;
+    padding: 2px 6px; border-radius: 8px; margin-left: 6px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .comp-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-radius: 6px;
+    font-size: 12px; gap: 8px;
+    background: #0f172a; border: 1px solid #1f2937;
+    margin-bottom: 4px;
+  }
+  .comp-row .comp-name { color: #e5e7eb; font-weight: 500; flex: 1 1 auto; min-width: 0; }
+  .comp-row .comp-note { color: #6b7280; font-size: 10px; display: block; font-weight: 400; margin-top: 1px; }
+  .comp-row .comp-value { color: #d1d5db; font-weight: 600; font-family: ui-monospace, monospace; flex-shrink: 0; }
+  .comp-row .comp-ratio {
+    font-size: 10px; color: #94a3b8; font-family: ui-monospace, monospace;
+    margin-left: 6px; padding: 1px 5px;
+    background: #1e293b; border-radius: 8px;
+  }
+  .comp-header-row {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: #6b7280;
+    padding: 4px 12px; text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+
+  /* Mobile breakpoints */
+  @media (max-width: 640px) {
+    body { padding: 12px; }
+    h1 { font-size: 19px; }
+    .subtitle { font-size: 12px; }
+    .panel { padding: 14px; }
+    .total-bar .value { font-size: 22px; }
+    .total-bar .secondary-value { font-size: 16px; }
+    .seg-header .seg-h-left .val { font-size: 18px; }
+    .seg-header .seg-h-right .val { font-size: 15px; }
+    .chart-wrap { height: 240px; }
+    .seg-tab { padding: 7px 10px; font-size: 11px; }
+    .baseline { display: block; margin-left: 0; margin-top: 2px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Tesla — Morgan Stanley SOTP Model</h1>
+  <div class="subtitle">
+    Interactive Sum-of-the-Parts valuation by <strong style="color:#d1d5db;">Andrew Percoco</strong> (Morgan Stanley, took over from Adam Jonas in Dec 2025). Baseline: $425/share.
+    <br>
+    Refs:
+    <a href="https://parameter.io/tesla-tsla-stock-new-morgan-stanley-analyst-cuts-rating-on-rich-valuation/" target="_blank" style="color:#60a5fa; text-decoration:none;">Segment breakdown ($55/$145/$60/$40/$125)</a>
+    &nbsp;·&nbsp;
+    <a href="https://www.investing.com/news/stock-market-news/morgan-stanley-moves-tesla-to-equal-weight-as-it-waits-for-a-better-entry-4395125" target="_blank" style="color:#60a5fa; text-decoration:none;">Investing.com: Percoco $425 PT note</a>
+  </div>
+
+  <div class="total-bar">
+    <div>
+      <div class="label">Implied Price Target</div>
+      <div>
+        <span class="value" id="totalPT">$425</span>
+        <span class="change" id="changeVsBaseline"></span>
+        <span class="baseline">vs $425 baseline</span>
+      </div>
+    </div>
+    <div>
+      <div class="label">Shares Outstanding</div>
+      <div class="secondary-value" id="totalShares">3.60B</div>
+    </div>
+    <div>
+      <div class="label">Implied Market Cap</div>
+      <div class="secondary-value" id="totalMC">$1.53T</div>
+    </div>
+  </div>
+
+  <div class="global-bar">
+    <div class="slider-group" style="margin-bottom: 14px;">
+      <div class="slider-row"><span class="name">Global WACC (discount rate, applied to all DCFs)</span><span class="val" id="waccVal">10.0%</span></div>
+      <input type="range" id="wacc" min="6" max="15" value="10" step="0.1">
+      <div class="slider-help">Higher WACC = lower present value across every segment. Sell-side typically uses 9–11% for Tesla.</div>
+    </div>
+    <div class="slider-group" style="margin-bottom: 0;">
+      <div class="slider-row"><span class="name">Terminal growth rate g (Gordon model)</span><span class="val" id="gVal">3.0%</span></div>
+      <input type="range" id="growth" min="0" max="6" value="3" step="0.1">
+      <div class="slider-help">Long-run cash-flow growth past horizon. Applies to Network, Robotaxi, Optimus. Auto uses g=2% fixed. Must stay below WACC. Sell-side defaults: 2–3% (≈ long-run inflation/GDP).</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Segment Value Breakdown</h2>
+      <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+      <div class="chart-legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Segment Assumptions</h2>
+      <div class="seg-tabs" id="tabs"></div>
+      <div id="segPanel"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// MORGAN STANLEY TESLA SOTP MODEL
+// ============================================================
+// Baseline price target: $425/share, ~3.6B shares = $1.53T mkt cap
+//   Network Services: $145  (FSD subs, Supercharging, software)
+//   Robotaxi:         $125  (Tesla Mobility fleet)
+//   Optimus:          $60   (humanoids, post 50% haircut)
+//   Core Auto:        $55   (car business)
+//   Energy:           $40   (Megapack, Powerwall)
+// ============================================================
+
+const SHARES = 3.6; // billion shares
+const HORIZON_YEARS = 15; // most segments terminal-value at ~2040
+
+const COLORS = {
+  network: '#8b5cf6',
+  robotaxi: '#3b82f6',
+  optimus: '#ec4899',
+  auto:    '#10b981',
+  energy:  '#f59e0b'
+};
+
+// ============================================================
+// SEGMENT DEFINITIONS
+// Each segment has a model() that returns $/share given current params.
+// The model is calibrated so default params reproduce the MS baseline.
+// ============================================================
+
+const segments = {
+  network: {
+    name: 'Network Services',
+    color: COLORS.network,
+    baseline: 145,
+    description: 'FSD subscriptions, Supercharging revenue, software/connectivity ARPU on the Tesla installed base.',
+    params: {
+      fleet2040:    { label: 'Tesla fleet by 2040 (M vehicles)',    min: 30,  max: 250,  step: 5,    default: 150,  unit: 'M',  currentVal: 9,    currentLabel: '~9M cars on road today' },
+      fsdPrice:     { label: 'FSD subscription price ($/yr)',       min: 600, max: 6000, step: 100,  default: 2400, unit: '$',  currentVal: 1188, currentLabel: '$99/mo = $1,188/yr today' },
+      fsdTakeRate:  { label: 'FSD take rate (% of fleet subscribed)', min: 5, max: 95, step: 1, default: 60, unit: '%', currentVal: 14, currentLabel: '~14% take rate today (1.28M of 9.2M)' },
+      scArpu:       { label: 'Supercharging + other ARPU ($/yr)',   min: 100, max: 2000, step: 50,   default: 400,  unit: '$',  currentVal: 200,  currentLabel: 'Supercharging ARPU today ≈ $200/yr' },
+      margin:       { label: 'FCF margin',                          min: 20,  max: 80,   step: 1,    default: 55,   unit: '%',  currentVal: 30,   currentLabel: 'Software-services margin today ≈ 30%' }
+    },
+    model(p, wacc, g) {
+      const revPerVehicle = p.fsdPrice * (p.fsdTakeRate / 100) + p.scArpu;
+      const revenue = p.fleet2040 * 1e6 * revPerVehicle;
+      const fcf = revenue * (p.margin / 100);
+      const termMult = 1 / (Math.max(wacc/100 - g/100, 0.01));
+      const pvFactor = 1 / Math.pow(1 + wacc/100, HORIZON_YEARS);
+      const pv = fcf * termMult * pvFactor;
+      return pv / (SHARES * 1e9);
+    },
+    flow(p, wacc, g) {
+      const fsdArpu = p.fsdPrice * (p.fsdTakeRate / 100);
+      const revPerVehicle = fsdArpu + p.scArpu;
+      const revenue = p.fleet2040 * 1e6 * revPerVehicle;
+      const fcf = revenue * (p.margin / 100);
+      const termMult = 1 / (Math.max(wacc/100 - g/100, 0.01));
+      const pvFactor = 1 / Math.pow(1 + wacc/100, HORIZON_YEARS);
+      const pv = fcf * termMult * pvFactor;
+      return [
+        ['FSD price × take rate', `$${p.fsdPrice.toLocaleString()} × ${p.fsdTakeRate}% = $${fsdArpu.toFixed(0)}/veh`],
+        ['+ Supercharging/other ARPU', `$${p.scArpu}/veh`],
+        ['= Blended ARPU per vehicle', `$${revPerVehicle.toFixed(0)}/yr`],
+        ['× Fleet by 2040', `${p.fleet2040}M vehicles`],
+        ['= Steady-state revenue', `$${(revenue/1e9).toFixed(0)}B/yr`],
+        ['× FCF margin', `${p.margin}%`],
+        ['= Steady-state FCF', `$${(fcf/1e9).toFixed(1)}B/yr`],
+        [`× Terminal multiple 1/(${wacc.toFixed(1)}%−${g.toFixed(1)}%)`, `${termMult.toFixed(1)}×`],
+        ['× PV factor (15yr @ WACC)', `${pvFactor.toFixed(3)}`],
+        ['= Present value', `$${(pv/1e9).toFixed(0)}B`],
+        ['÷ 3.6B shares', `$${(pv/(SHARES*1e9)).toFixed(0)}/share`]
+      ];
+    },
+    formula: 'PV = fleet × (FSD$ × takeRate + SC$) × margin × [1/(WACC−g)] × [1/(1+WACC)^15]',
+    competitors: [
+      { name: 'Apple Services (implicit)',  value: 1500, note: 'Apple svc ~$115B rev × ~13× mult' },
+      { name: 'Netflix',                    value: 280,  note: 'Subscription gold standard' },
+      { name: 'Spotify',                    value: 145,  note: 'Music streaming leader' },
+      { name: 'Roku',                       value: 16,   note: 'Connected-TV ad/svc platform' }
+    ]
+  },
+
+  robotaxi: {
+    name: 'Robotaxi (Tesla Mobility)',
+    color: COLORS.robotaxi,
+    baseline: 125,
+    description: 'Tesla-operated autonomous ride-hail fleet. Revenue per mile minus operating cost.',
+    params: {
+      fleetSize: { label: 'Robotaxi fleet by 2040 (M vehicles)', min: 1, max: 20, step: 0.5, default: 5, unit: 'M', currentVal: 0.001, currentLabel: 'Austin pilot ≈ ~10 cars today' },
+      milesPerVehicle: { label: 'Miles per vehicle per year (K)', min: 30, max: 150, step: 5, default: 90, unit: 'K', currentVal: 50, currentLabel: 'Avg Uber driver ≈ 50K mi/yr' },
+      revPerMile: { label: 'Net revenue per mile ($)', min: 0.30, max: 2.00, step: 0.05, default: 1.00, unit: '$', currentVal: 2.50, currentLabel: 'Uber gross ≈ $2.50/mi today' },
+      margin:    { label: 'Operating margin', min: 15, max: 60, step: 1, default: 30, unit: '%', currentVal: 5, currentLabel: 'Uber adj op margin ≈ 5%' }
+    },
+    model(p, wacc, g) {
+      const totalMiles = p.fleetSize * 1e6 * p.milesPerVehicle * 1000;
+      const revenue = totalMiles * p.revPerMile;
+      const fcf = revenue * (p.margin / 100);
+      const termMult = 1 / (Math.max(wacc/100 - g/100, 0.01));
+      const pvFactor = 1 / Math.pow(1 + wacc/100, HORIZON_YEARS);
+      return (fcf * termMult * pvFactor) / (SHARES * 1e9);
+    },
+    flow(p, wacc, g) {
+      const totalMiles = p.fleetSize * 1e6 * p.milesPerVehicle * 1000;
+      const revenue = totalMiles * p.revPerMile;
+      const fcf = revenue * (p.margin / 100);
+      const termMult = 1 / (Math.max(wacc/100 - g/100, 0.01));
+      const pvFactor = 1 / Math.pow(1 + wacc/100, HORIZON_YEARS);
+      const pv = fcf * termMult * pvFactor;
+      return [
+        ['Fleet by 2040', `${p.fleetSize}M vehicles`],
+        ['× Miles per vehicle/yr', `${p.milesPerVehicle.toLocaleString()}K`],
+        ['= Total miles/yr', `${(totalMiles/1e9).toFixed(1)}B`],
+        ['× Net revenue per mile', `$${p.revPerMile.toFixed(2)}`],
+        ['= Steady-state revenue', `$${(revenue/1e9).toFixed(0)}B/yr`],
+        ['× Operating margin', `${p.margin}%`],
+        ['= Steady-state FCF', `$${(fcf/1e9).toFixed(1)}B/yr`],
+        [`× Terminal multiple 1/(${wacc.toFixed(1)}%−${g.toFixed(1)}%)`, `${termMult.toFixed(1)}×`],
+        ['× PV factor', `${pvFactor.toFixed(3)}`],
+        ['= Present value', `$${(pv/1e9).toFixed(0)}B`],
+        ['÷ 3.6B shares', `$${(pv/(SHARES*1e9)).toFixed(0)}/share`]
+      ];
+    },
+    formula: 'PV = (fleet × miles × $/mile × margin) × [1/(WACC−g)] × [1/(1+WACC)^15]',
+    competitors: [
+      { name: 'Waymo (Alphabet)',   value: 126, note: 'Feb 2026 round; ~14M trips in 2025' },
+      { name: 'Uber',               value: 170, note: '$44B revenue; partial robotaxi exposure' },
+      { name: 'Pony.ai',            value: 4,   note: 'China robotaxi public co' },
+      { name: 'Lyft',               value: 8,   note: 'US #2 ride-hail; partnerships with Waymo' }
+    ]
+  },
+
+  optimus: {
+    name: 'Optimus (Humanoid Robots)',
+    color: COLORS.optimus,
+    baseline: 60,
+    description: 'Humanoid robot business. Hardware ASP + software/services ARPU on installed base.',
+    params: {
+      installedBase: { label: 'Installed base by 2040 (M units)', min: 10, max: 500, step: 5, default: 80, unit: 'M', currentVal: 0.001, currentLabel: '~hundreds of prototypes shipped' },
+      blendedARPU:   { label: 'Blended revenue per unit/yr ($)', min: 2000, max: 50000, step: 500, default: 8000, unit: '$', currentVal: 0, currentLabel: 'No commercial revenue yet' },
+      margin:        { label: 'FCF margin', min: 10, max: 40, step: 1, default: 20, unit: '%', currentVal: 0, currentLabel: 'Pre-revenue; -100% today' },
+      haircut:       { label: 'Probability haircut (MS applies 50%)', min: 0, max: 90, step: 5, default: 50, unit: '%', currentVal: 50, currentLabel: 'MS baseline = 50% haircut' }
+    },
+    model(p, wacc, g) {
+      const revenue = p.installedBase * 1e6 * p.blendedARPU;
+      const fcf = revenue * (p.margin / 100);
+      const termMult = 1 / (Math.max(wacc/100 - g/100, 0.01));
+      const pvFactor = 1 / Math.pow(1 + wacc/100, HORIZON_YEARS);
+      const pvRaw = fcf * termMult * pvFactor;
+      const pvHaircut = pvRaw * (1 - p.haircut/100);
+      return pvHaircut / (SHARES * 1e9);
+    },
+    flow(p, wacc, g) {
+      const revenue = p.installedBase * 1e6 * p.blendedARPU;
+      const fcf = revenue * (p.margin / 100);
+      const termMult = 1 / (Math.max(wacc/100 - g/100, 0.01));
+      const pvFactor = 1 / Math.pow(1 + wacc/100, HORIZON_YEARS);
+      const pvRaw = fcf * termMult * pvFactor;
+      const pvHaircut = pvRaw * (1 - p.haircut/100);
+      return [
+        ['Installed base by 2040', `${p.installedBase}M units`],
+        ['× Blended ARPU/unit', `$${p.blendedARPU.toLocaleString()}/yr`],
+        ['= Steady-state revenue', `$${(revenue/1e9).toFixed(0)}B/yr`],
+        ['× FCF margin', `${p.margin}%`],
+        ['= Steady-state FCF', `$${(fcf/1e9).toFixed(1)}B/yr`],
+        [`× Terminal multiple 1/(${wacc.toFixed(1)}%−${g.toFixed(1)}%)`, `${termMult.toFixed(1)}×`],
+        ['× PV factor', `${pvFactor.toFixed(3)}`],
+        ['= Raw DCF value', `$${(pvRaw/1e9).toFixed(0)}B  ($${(pvRaw/(SHARES*1e9)).toFixed(0)}/sh)`],
+        [`× (1 − ${p.haircut}% haircut)`, `${(1-p.haircut/100).toFixed(2)}`],
+        ['= Risk-adjusted PV', `$${(pvHaircut/1e9).toFixed(0)}B`],
+        ['÷ 3.6B shares', `$${(pvHaircut/(SHARES*1e9)).toFixed(0)}/share`]
+      ];
+    },
+    formula: 'PV = (units × ARPU × margin) × [1/(WACC−g)] × [1/(1+WACC)^15] × (1 − haircut)',
+    competitors: [
+      { name: 'Figure AI',           value: 39,  note: 'Private, Microsoft/Nvidia-backed (2025)' },
+      { name: 'Boston Dynamics',     value: 25,  note: 'Korean analyst est; IPO target $85–100B' },
+      { name: 'Agility Robotics',    value: 2,   note: 'Digit warehouse robot; Amazon-backed' },
+      { name: 'Unitree (China)',     value: 3,   note: 'Low-cost humanoid leader' }
+    ]
+  },
+
+  auto: {
+    name: 'Core Auto',
+    color: COLORS.auto,
+    baseline: 55,
+    description: 'Traditional vehicle business: Model 3/Y/S/X, Cybertruck, affordable model.',
+    params: {
+      deliveries2030: { label: 'Deliveries by 2030 (M)', min: 1.5, max: 8, step: 0.1, default: 3.5, unit: 'M', currentVal: 1.65, currentLabel: '2025 actual: 1.65M (peak 1.85M in 2023)' },
+      asp:            { label: 'Average selling price ($)', min: 25000, max: 60000, step: 1000, default: 40000, unit: '$', currentVal: 41000, currentLabel: '2025 blended ASP ≈ $41K' },
+      netMargin:      { label: 'Net margin', min: 3, max: 20, step: 0.5, default: 15, unit: '%', currentVal: 6, currentLabel: 'Current net margin ≈ 6%' },
+      exitPE:         { label: 'Exit P/E multiple', min: 6, max: 25, step: 0.5, default: 12, unit: '×', currentVal: 8, currentLabel: 'Auto OEM peer median ≈ 8×' }
+    },
+    model(p, wacc, g) {
+      const revenue = p.deliveries2030 * 1e6 * p.asp;
+      const netProfit = revenue * (p.netMargin / 100);
+      // 5-year PV factor (steady state ~2030, sooner than other segments)
+      const pvFactor = 1 / Math.pow(1 + wacc/100, 5);
+      const exitValue = netProfit * p.exitPE;
+      // Plus terminal value beyond exit using Gordon at 2% growth (fixed for mature auto)
+      const termMult = 1 / (Math.max(wacc/100 - 0.02, 0.01));
+      const terminalValue = netProfit * termMult * pvFactor;
+      // Take average of exit-multiple and terminal-growth approaches, plus interim cash flows
+      const interim = netProfit * 0.7 * 2.5; // rough sum of discounted years
+      const pv = (exitValue * pvFactor + terminalValue) / 2 + interim;
+      return pv / (SHARES * 1e9);
+    },
+    flow(p, wacc, g) {
+      const revenue = p.deliveries2030 * 1e6 * p.asp;
+      const netProfit = revenue * (p.netMargin / 100);
+      const pvFactor = 1 / Math.pow(1 + wacc/100, 5);
+      const exitValue = netProfit * p.exitPE;
+      const termMult = 1 / (Math.max(wacc/100 - 0.02, 0.01));
+      const terminalValue = netProfit * termMult * pvFactor;
+      const interim = netProfit * 0.7 * 2.5;
+      const pv = (exitValue * pvFactor + terminalValue) / 2 + interim;
+      return [
+        ['2030 deliveries', `${p.deliveries2030.toFixed(1)}M cars`],
+        ['× ASP', `$${(p.asp/1000).toFixed(0)}K`],
+        ['= 2030 revenue', `$${(revenue/1e9).toFixed(0)}B/yr`],
+        ['× Net margin', `${p.netMargin}%`],
+        ['= 2030 net profit', `$${(netProfit/1e9).toFixed(1)}B/yr`],
+        ['× Exit P/E', `${p.exitPE}×`],
+        ['= Exit value (2030)', `$${(exitValue/1e9).toFixed(0)}B`],
+        ['× PV factor (5yr @ WACC)', `${pvFactor.toFixed(3)}`],
+        ['+ terminal + interim CF', `(blended)`],
+        ['= Total PV', `$${(pv/1e9).toFixed(0)}B`],
+        ['÷ 3.6B shares', `$${(pv/(SHARES*1e9)).toFixed(0)}/share`]
+      ];
+    },
+    formula: 'PV = blend of (NetProfit × P/E × PV-factor) and (NetProfit × Gordon) + interim CF',
+    competitors: [
+      { name: 'Toyota',     value: 250, note: '#1 global automaker by volume (~10M cars)' },
+      { name: 'BYD',        value: 120, note: '#1 EV maker by volume; China leader' },
+      { name: 'Ferrari',    value: 90,  note: 'Luxury benchmark; ~50× P/E' },
+      { name: 'GM',         value: 55,  note: 'US legacy; ~6× P/E' },
+      { name: 'Ford',       value: 45,  note: 'US legacy; ~7× P/E' }
+    ]
+  },
+
+  energy: {
+    name: 'Energy (Storage)',
+    color: COLORS.energy,
+    baseline: 40,
+    description: 'Megapack utility-scale storage + Powerwall residential. EBITDA × multiple.',
+    params: {
+      gwhDeployed: { label: 'GWh deployed/yr by 2030', min: 50, max: 600, step: 10, default: 280, unit: 'GWh', currentVal: 40, currentLabel: '2025 deployment ≈ 40 GWh' },
+      revPerGWh:   { label: 'Revenue per GWh ($M)', min: 150, max: 400, step: 10, default: 250, unit: '$M', currentVal: 250, currentLabel: 'Megapack pricing ≈ $250M/GWh' },
+      ebitdaMargin:{ label: 'EBITDA margin', min: 10, max: 35, step: 1, default: 22, unit: '%', currentVal: 17, currentLabel: 'Energy segment margin today ≈ 17%' },
+      multiple:    { label: 'EV/EBITDA multiple', min: 5, max: 30, step: 0.5, default: 15, unit: '×', currentVal: 12, currentLabel: 'Utility-grade infra peer ≈ 12×' }
+    },
+    model(p, wacc, g) {
+      const revenue = p.gwhDeployed * p.revPerGWh * 1e6;
+      const ebitda = revenue * (p.ebitdaMargin / 100);
+      const ev = ebitda * p.multiple;
+      const pvFactor = 1 / Math.pow(1 + wacc/100, 5);
+      return (ev * pvFactor) / (SHARES * 1e9);
+    },
+    flow(p, wacc, g) {
+      const revenue = p.gwhDeployed * p.revPerGWh * 1e6;
+      const ebitda = revenue * (p.ebitdaMargin / 100);
+      const ev = ebitda * p.multiple;
+      const pvFactor = 1 / Math.pow(1 + wacc/100, 5);
+      const pv = ev * pvFactor;
+      return [
+        ['GWh deployed by 2030', `${p.gwhDeployed} GWh/yr`],
+        ['× Revenue per GWh', `$${p.revPerGWh}M`],
+        ['= 2030 revenue', `$${(revenue/1e9).toFixed(0)}B/yr`],
+        ['× EBITDA margin', `${p.ebitdaMargin}%`],
+        ['= 2030 EBITDA', `$${(ebitda/1e9).toFixed(1)}B/yr`],
+        ['× EV/EBITDA multiple', `${p.multiple}×`],
+        ['= Enterprise value (2030)', `$${(ev/1e9).toFixed(0)}B`],
+        ['× PV factor (5yr @ WACC)', `${pvFactor.toFixed(3)}`],
+        ['= Present value', `$${(pv/1e9).toFixed(0)}B`],
+        ['÷ 3.6B shares', `$${(pv/(SHARES*1e9)).toFixed(0)}/share`]
+      ];
+    },
+    formula: 'PV = (GWh × $/GWh × EBITDA margin × multiple) × [1/(1+WACC)^5]',
+    competitors: [
+      { name: 'GE Vernova',      value: 185, note: 'Grid + power eq; broader scope' },
+      { name: 'Siemens Energy',  value: 126, note: 'Grid infrastructure giant' },
+      { name: 'Bloom Energy',    value: 35,  note: 'Fuel cells; high multiple' },
+      { name: 'Fluence (FLNC)',  value: 5,   note: 'Pure-play storage; $2.3B revenue' },
+      { name: 'Enphase',         value: 12,  note: 'Residential solar/storage' }
+    ]
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let activeSeg = 'network';
+const state = { wacc: 10, g: 3 };
+for (const [k, seg] of Object.entries(segments)) {
+  state[k] = {};
+  for (const [pname, p] of Object.entries(seg.params)) {
+    state[k][pname] = p.default;
+  }
+}
+
+// ============================================================
+// COMPUTE TOTAL
+// ============================================================
+function computeAll() {
+  const values = {};
+  for (const k of Object.keys(segments)) {
+    values[k] = segments[k].model(state[k], state.wacc, state.g);
+  }
+  const total = Object.values(values).reduce((a, b) => a + b, 0);
+  return { values, total };
+}
+
+// ============================================================
+// CHART
+// ============================================================
+let pieChart;
+function initChart() {
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  const { values } = computeAll();
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.values(segments).map(s => s.name),
+      datasets: [{
+        data: Object.keys(segments).map(k => values[k]),
+        backgroundColor: Object.values(segments).map(s => s.color),
+        borderColor: '#0a0e1a',
+        borderWidth: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: $${ctx.parsed.toFixed(0)}/share`
+          }
+        }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+function updateChart() {
+  const { values, total } = computeAll();
+  pieChart.data.datasets[0].data = Object.keys(segments).map(k => values[k]);
+  pieChart.update('none');
+
+  document.getElementById('totalPT').textContent = `$${total.toFixed(0)}`;
+  document.getElementById('totalShares').textContent = `${SHARES.toFixed(2)}B`;
+  document.getElementById('totalMC').textContent = `$${((total * SHARES) / 1000).toFixed(2)}T`;
+
+  const delta = total - 425;
+  const changeEl = document.getElementById('changeVsBaseline');
+  if (Math.abs(delta) < 1) {
+    changeEl.textContent = '';
+  } else {
+    changeEl.textContent = `${delta >= 0 ? '+' : ''}$${delta.toFixed(0)}`;
+    changeEl.className = `change ${delta >= 0 ? 'up' : 'down'}`;
+  }
+
+  // Update legend with per-share AND total $B
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  for (const [k, seg] of Object.entries(segments)) {
+    const v = values[k];
+    const totalB = v * SHARES;
+    const pct = (v / total * 100).toFixed(0);
+    legend.innerHTML += `
+      <div class="legend-row">
+        <div class="legend-left">
+          <div class="dot" style="background:${seg.color}"></div>
+          <span>${seg.name}</span>
+        </div>
+        <div class="legend-right">
+          $${v.toFixed(0)}/sh
+          <span style="color:#9ca3af; font-weight: 500; margin-left: 8px; font-size: 12px;">$${totalB.toFixed(0)}B</span>
+          <span style="color:#6b7280; font-weight: 400; margin-left: 6px; font-size: 11px;">${pct}%</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // Update segment header if a panel is open
+  if (document.getElementById('segHeader')) {
+    const segVal = values[activeSeg];
+    const segTotal = segVal * SHARES;
+    const segPct = (segVal / total * 100).toFixed(0);
+    document.getElementById('segHeaderValue').textContent = `$${segVal.toFixed(0)}/sh`;
+    document.getElementById('segHeaderTotal').textContent = `$${segTotal.toFixed(0)}B`;
+    document.getElementById('segHeaderPct').textContent = `${segPct}% of PT`;
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function buildTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  for (const [k, seg] of Object.entries(segments)) {
+    const btn = document.createElement('button');
+    btn.className = 'seg-tab' + (k === activeSeg ? ' active' : '');
+    btn.textContent = seg.name;
+    btn.onclick = () => { activeSeg = k; buildTabs(); buildSegPanel(); };
+    tabs.appendChild(btn);
+  }
+}
+
+// ============================================================
+// SEGMENT PANEL (sliders + flow diagram)
+// ============================================================
+function buildSegPanel() {
+  const seg = segments[activeSeg];
+  const { values, total } = computeAll();
+  const segVal = values[activeSeg];
+  const segTotal = segVal * SHARES;
+  const segPct = (segVal / total * 100).toFixed(0);
+
+  const panel = document.getElementById('segPanel');
+  panel.innerHTML = `
+    <div class="seg-header" id="segHeader" style="background: linear-gradient(90deg, ${seg.color}22, ${seg.color}08); border: 1px solid ${seg.color}44;">
+      <div class="seg-h-left">
+        <div class="lbl">${seg.name} — $/share</div>
+        <div class="val"><span id="segHeaderValue">$${segVal.toFixed(0)}/sh</span><span class="pct" id="segHeaderPct">${segPct}% of PT</span></div>
+      </div>
+      <div class="seg-h-right">
+        <div class="lbl">Segment Value</div>
+        <div class="val" id="segHeaderTotal">$${segTotal.toFixed(0)}B</div>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #9ca3af; margin-bottom: 14px; line-height: 1.5;">${seg.description}</div>
+    <div id="sliders"></div>
+    <button class="reset-btn" id="resetBtn">Reset segment to baseline</button>
+    <div class="formula-hint">${seg.formula}</div>
+    <h2 style="margin-top: 20px; margin-bottom: 12px;">Derivation Flow</h2>
+    <div class="flow" id="flow"></div>
+    <h2 style="margin-top: 20px; margin-bottom: 8px;">Competitors — Total Market Value ($B)</h2>
+    <div class="competitors" id="competitors"></div>
+  `;
+
+  const sliders = document.getElementById('sliders');
+  for (const [pname, pdef] of Object.entries(seg.params)) {
+    const cur = state[activeSeg][pname];
+    const fmt = formatValue(cur, pdef);
+    const badge = buildStatusBadge(cur, pdef);
+    const nowLine = pdef.currentLabel ? `<div class="status-now-line">Today: ${pdef.currentLabel}</div>` : '';
+    sliders.innerHTML += `
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="name">${pdef.label}${badge}</span>
+          <span class="val" id="val_${pname}">${fmt}</span>
+        </div>
+        <input type="range" id="sl_${pname}" min="${pdef.min}" max="${pdef.max}" step="${pdef.step}" value="${cur}">
+        ${nowLine}
+      </div>
+    `;
+  }
+
+  // Attach slider handlers
+  for (const pname of Object.keys(seg.params)) {
+    const sl = document.getElementById('sl_' + pname);
+    sl.addEventListener('input', e => {
+      state[activeSeg][pname] = parseFloat(e.target.value);
+      document.getElementById('val_' + pname).textContent = formatValue(state[activeSeg][pname], seg.params[pname]);
+      // Update status badge inline
+      const nameSpan = sl.parentElement.querySelector('.slider-row .name');
+      const pdef = seg.params[pname];
+      nameSpan.innerHTML = `${pdef.label}${buildStatusBadge(state[activeSeg][pname], pdef)}`;
+      updateChart();
+      updateFlow();
+    });
+  }
+
+  document.getElementById('resetBtn').onclick = () => {
+    for (const [pname, pdef] of Object.entries(seg.params)) {
+      state[activeSeg][pname] = pdef.default;
+    }
+    buildSegPanel();
+    updateChart();
+  };
+
+  updateFlow();
+}
+
+function buildStatusBadge(currentSliderVal, pdef) {
+  if (pdef.currentVal === undefined || pdef.currentVal === null) return '';
+  if (pdef.currentVal === 0) {
+    return `<span class="status-badge mult-up" title="No baseline today">no baseline today</span>`;
+  }
+  const ratio = currentSliderVal / pdef.currentVal;
+  let cls = 'now';
+  let label = '';
+  if (ratio >= 1.5) {
+    cls = 'mult-up';
+    if (ratio >= 1e6) label = `${(ratio/1e6).toFixed(1)}M× today`;
+    else if (ratio >= 1000) label = `${(ratio/1000).toFixed(ratio>=10000?0:1)}K× today`;
+    else if (ratio >= 100) label = `${ratio.toFixed(0)}× today`;
+    else label = `${ratio.toFixed(1)}× today`;
+  } else if (ratio <= 0.66) {
+    cls = 'mult-down';
+    label = `${(ratio*100).toFixed(0)}% of today`;
+  } else {
+    cls = 'now';
+    label = `≈ today (${(ratio*100).toFixed(0)}%)`;
+  }
+  return `<span class="status-badge ${cls}">${label}</span>`;
+}
+
+function formatValue(v, pdef) {
+  if (pdef.unit === '%' || pdef.unit === '×' || pdef.unit === 'M' || pdef.unit === 'K' || pdef.unit === 'GWh') {
+    return `${v}${pdef.unit === '%' ? '%' : pdef.unit === '×' ? '×' : ' ' + pdef.unit}`;
+  }
+  if (pdef.unit === '$M') return `$${v}M`;
+  if (pdef.unit === '$') {
+    if (v >= 1000) return `$${v.toLocaleString()}`;
+    return `$${v.toFixed(2)}`;
+  }
+  return v.toString();
+}
+
+function updateFlow() {
+  const seg = segments[activeSeg];
+  const steps = seg.flow(state[activeSeg], state.wacc, state.g);
+  const flow = document.getElementById('flow');
+  flow.innerHTML = '';
+  steps.forEach((step, i) => {
+    const isLast = i === steps.length - 1;
+    flow.innerHTML += `
+      <div class="flow-step ${isLast ? 'flow-final' : ''}">
+        <div class="lbl">${step[0]}</div>
+        <div class="res">${step[1]}</div>
+      </div>
+      ${!isLast ? '<div class="flow-arrow">↓</div>' : ''}
+    `;
+  });
+  updateCompetitors();
+}
+
+function updateCompetitors() {
+  const seg = segments[activeSeg];
+  if (!seg.competitors) return;
+  const el = document.getElementById('competitors');
+  if (!el) return;
+  const { values } = computeAll();
+  const tslaValue = values[activeSeg] * SHARES;  // $B
+
+  // Sort competitors descending by value, with TSLA inserted at right position
+  const allRows = [
+    { name: `Tesla — ${seg.name}`, value: tslaValue, isTsla: true, note: 'Per Morgan Stanley SOTP (current slider state)' },
+    ...seg.competitors.map(c => ({ ...c, isTsla: false }))
+  ].sort((a, b) => b.value - a.value);
+
+  el.innerHTML = '';
+  el.innerHTML += `<div class="comp-header-row"><span>Company</span><span>Equity Value</span></div>`;
+  allRows.forEach(row => {
+    const ratio = row.value / tslaValue;
+    const ratioStr = row.isTsla ? '' : (ratio >= 1 ? `${ratio.toFixed(1)}× TSLA` : `${(ratio*100).toFixed(0)}% of TSLA`);
+    if (row.isTsla) {
+      el.innerHTML += `
+        <div class="comp-tsla-row">
+          <div>
+            <span class="comp-name">${row.name}</span>
+            <span class="comp-tag">This Segment</span>
+            <div class="comp-note" style="margin-top: 2px;">${row.note}</div>
+          </div>
+          <div class="comp-value">$${row.value.toFixed(0)}B</div>
+        </div>
+      `;
+    } else {
+      el.innerHTML += `
+        <div class="comp-row">
+          <div class="comp-name">
+            ${row.name}
+            <span class="comp-note">${row.note}</span>
+          </div>
+          <div>
+            <span class="comp-value">$${row.value.toFixed(0)}B</span>
+            <span class="comp-ratio">${ratioStr}</span>
+          </div>
+        </div>
+      `;
+    }
+  });
+}
+
+// ============================================================
+// GLOBAL WACC
+// ============================================================
+document.getElementById('wacc').addEventListener('input', e => {
+  state.wacc = parseFloat(e.target.value);
+  document.getElementById('waccVal').textContent = state.wacc.toFixed(1) + '%';
+  updateChart();
+  updateFlow();
+});
+
+document.getElementById('growth').addEventListener('input', e => {
+  state.g = parseFloat(e.target.value);
+  document.getElementById('gVal').textContent = state.g.toFixed(1) + '%';
+  updateChart();
+  updateFlow();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+initChart();
+buildTabs();
+buildSegPanel();
+updateChart();
+</script>
+</body>
+</html>
