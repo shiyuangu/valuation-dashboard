@@ -1,3 +1,12 @@
+# Valuation Dashboards — Morgan Stanley SOTP Models
+
+Two interactive sum-of-the-parts dashboards, switchable from the tab bar at the top of each page:
+
+- **Tesla (TSLA)** — `index.html`
+- **SpaceX (SPCX)** — `spcx.html`
+
+---
+
 # Tesla SOTP Dashboard — Morgan Stanley Valuation Model
 
 Interactive Sum-of-the-Parts valuation of Tesla (TSLA), reproducing the framework used by **Andrew Percoco** (Morgan Stanley, took over Tesla coverage from Adam Jonas in Dec 2025) to arrive at a **$425/share** price target.
@@ -33,6 +42,18 @@ PV = Steady-state FCF × [1 / (WACC − g)] × [1 / (1 + WACC)^15]
 Optimus additionally applies a probability haircut: `PV × (1 − haircut)`.
 
 Auto uses a 5-year discount on a blended (exit P/E, Gordon terminal) average. Energy uses an EV/EBITDA multiple discounted back 5 years.
+
+## SpaceX (SPCX) dashboard
+
+Rebuilt from Morgan Stanley's **$300** base case (Adam Jonas): Enterprise AI $165 + Connectivity $118 + Space $8 + X & Grok $8 per share. Morgan Stanley disclosed only the per-segment values; driver inputs are reverse-engineered to reproduce them. Connected devices default to a more conservative 50M (vs. ~1.5B implied), giving $266; the “Match MS” preset restores $300.
+
+Each segment is valued as a steady state in horizon year `T`, capitalized with Gordon growth and discounted to 2027:
+
+```
+V = p · FCF_T · (1 + g) / [(r − g) · (1 + r)^(T − 2027)] / N
+```
+
+Features: context notes for every input comparing it with real-world figures, clickable reference points on sliders, a WACC × g sensitivity grid, the market-implied AI capacity and discount rate, a capex section comparing the build-out needed by `T` with SpaceX's current spending, and an itemized orbital AI build cost per GW (launch, GPUs, solar, radiators, structure) with a launch-cadence check.
 
 ## Run locally
 

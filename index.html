@@ -240,10 +240,21 @@
     .seg-tab { padding: 7px 10px; font-size: 11px; }
     .baseline { display: block; margin-left: 0; margin-top: 2px; }
   }
+  /* Dashboard switcher */
+  .vd-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: #0f172a; border: 1px solid #1f2937; border-radius: 10px; overflow-x: auto; }
+  .vd-tab { flex: 0 0 auto; padding: 9px 18px; border-radius: 7px; font-size: 14px; font-weight: 600; color: #9ca3af; text-decoration: none; white-space: nowrap; }
+  .vd-tab.on { background: #1e293b; color: #f9fafb; }
+  .vd-tab:hover:not(.on) { color: #d1d5db; }
+  .vd-tab:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
 </style>
 </head>
 <body>
 <div class="container">
+  <nav class="vd-tabs" aria-label="Dashboards">
+    <a class="vd-tab on" href="./" aria-current="page">Tesla · TSLA</a>
+    <a class="vd-tab" href="spcx.html">SpaceX · SPCX</a>
+  </nav>
+
   <h1>Tesla — Morgan Stanley SOTP Model</h1>
   <div class="subtitle">
     Interactive Sum-of-the-Parts valuation by <strong style="color:#d1d5db;">Andrew Percoco</strong> (Morgan Stanley, took over from Adam Jonas in Dec 2025). Baseline: $425/share.

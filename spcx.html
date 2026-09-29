@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SPCX sum-of-the-parts, after Morgan Stanley</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Source+Serif+4:ital,opsz,wght@1,8..60,400;1,8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1F4; --panel:#F8FAFC; --ink:#14213D; --muted:#56657C; --rule:#C9D2DD;
+  --c-ai:#2E4BD8; --c-con:#138A77; --c-space:#C98A00; --c-xg:#7E8499;
+  --signal:#C8374B; --focus:#2E4BD8;
+  --sans:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1726; --panel:#162033; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3850;
+    --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --signal:#FF6B7F; --focus:#8FA2FF;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1726; --panel:#162033; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3850;
+  --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --signal:#FF6B7F; --focus:#8FA2FF;
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+h1{font-stretch:125%;font-weight:800;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.01em;margin:0 0 10px}
+h2{font-stretch:112%;font-weight:700;font-size:22px;margin:0}
+h3{font-weight:650;font-size:17px;margin:0 0 8px}
+p{margin:0 0 10px;max-width:72ch}
+.lede{color:var(--muted);font-size:17px}
+.var{font-family:var(--serif);font-style:italic}
+a{color:var(--c-ai)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* hero ruler */
+.hero{margin:26px 0 8px}
+.hero svg{width:100%;height:auto;display:block;overflow:visible}
+.tick{font-size:12px;fill:var(--muted)}
+.mark-label{font-size:13px;font-weight:600}
+.headline{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin:6px 0 4px}
+.big{font-stretch:125%;font-weight:800;font-size:clamp(40px,8vw,72px);line-height:1}
+.sub{color:var(--muted)}
+.up{color:var(--c-con);font-weight:650}.down{color:var(--signal);font-weight:650}
+
+/* controls */
+.bar{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:flex-end;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);padding:16px 0;margin:22px 0}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:150px;flex:1 1 150px}
+.ctl label{font-size:14px;color:var(--muted)}
+.ctl output{font-weight:700;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--ink)}
+input[type=number]{font:inherit;width:100%;padding:6px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);color:var(--ink)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;font-size:14px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+button.on{background:var(--ink);color:var(--paper)}
+.implied{background:var(--panel);border-left:4px solid var(--signal);padding:12px 16px;margin:0 0 26px;border-radius:0 6px 6px 0}
+.implied p{margin:0}
+
+/* summary */
+.summary{display:flex;flex-wrap:wrap;gap:28px;margin-bottom:34px}
+.mix{flex:1 1 380px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.mix svg{width:170px;height:170px;flex:0 0 auto}
+table{border-collapse:collapse;width:100%}
+.scroll{overflow-x:auto;max-width:100%}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;font-size:14px}
+th{font-weight:600;color:var(--muted)}
+td:first-child,th:first-child{text-align:left}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:0}
+tfoot td{font-weight:700;border-bottom:2px solid var(--ink)}
+.sens{flex:1 1 360px}
+.sens td.cur{outline:2px solid var(--ink);outline-offset:-2px;font-weight:700}
+.sens caption{text-align:left;font-weight:650;padding-bottom:6px}
+.note{font-size:13px;color:var(--muted)}
+
+/* segments */
+.seg{border-top:6px solid var(--seg);background:var(--panel);border-radius:0 0 8px 8px;padding:18px 18px 16px;margin-bottom:22px}
+.seg-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 18px;margin-bottom:12px}
+.seg-val{font-stretch:118%;font-weight:800;font-size:30px;color:var(--seg)}
+.seg-ms{color:var(--muted);font-size:14px}
+.grid{display:flex;flex-wrap:wrap;gap:14px 28px}
+.param{flex:1 1 280px;display:flex;flex-direction:column;gap:3px}
+.param .row{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.param .row span:first-child{color:var(--muted)}
+.param input[type=range]{accent-color:var(--seg)}
+.badge{font-size:12.5px;line-height:1.35;color:var(--ink);background:color-mix(in srgb,var(--seg) 12%,transparent);border-radius:4px;padding:3px 7px;align-self:flex-start}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin-top:16px;padding-top:14px;border-top:1px dashed var(--rule)}
+.step{flex:1 1 150px;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;background:var(--paper)}
+.step .f{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted)}
+.step .n{font-weight:700;font-size:16px}
+.step.last{border-color:var(--seg);border-width:2px}
+.method{border-top:2px solid var(--ink);padding-top:18px;margin-top:10px}
+.eq{font-family:var(--serif);font-style:italic;font-size:19px;background:var(--panel);padding:12px 16px;border-radius:6px;overflow-x:auto;white-space:nowrap}
+ol.refs{padding-left:20px;font-size:14px}
+ol.refs li{margin-bottom:4px}
+.ctx{font-size:13px;line-height:1.45;color:var(--muted);max-width:none}
+.ctx sup{font-size:10px}
+.marks{position:relative;height:26px;margin-top:-2px}
+.mk{position:absolute;top:0;transform:translateX(-50%);font:inherit;font-size:11.5px;font-weight:500;line-height:1.2;padding:9px 3px 0;border:0;border-radius:3px;background:transparent;color:var(--muted);white-space:nowrap;cursor:pointer}
+.mk::before{content:"";position:absolute;top:calc(var(--row,0) * -15px);left:50%;width:1.5px;height:calc(7px + var(--row,0) * 15px);background:var(--muted);opacity:.7}
+.mk.l{transform:none}.mk.l::before{left:0}
+.mk.r{transform:translateX(-100%)}.mk.r::before{left:auto;right:0}
+.mk:hover{color:var(--ink)}
+.bar .ctx{margin-top:2px}
+.capex{border-top:2px solid var(--ink);padding-top:18px;margin:10px 0 30px}
+.capex .param{--seg:var(--ink)}
+.facts{padding-left:20px;font-size:14.5px;max-width:80ch}.facts li{margin-bottom:5px}
+.orb{background:var(--panel);border-radius:8px;padding:16px 16px 12px;margin-top:22px}
+.orb .param{--seg:var(--c-ai)}
+.orb-top{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.flag{color:var(--signal);font-weight:650}
+.howto{font-size:14px;color:var(--muted);margin:-8px 0 18px}
+@media (prefers-reduced-motion:no-preference){ .stack rect{transition:width .25s ease,x .25s ease} }
+@media (max-width:560px){ .wrap{padding:18px 14px 48px} .seg{padding:14px 12px} }
+.vd-tabs{display:flex;gap:4px;padding:4px;margin:0 0 22px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow-x:auto}
+.vd-tab{flex:0 0 auto;padding:9px 18px;border-radius:7px;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;white-space:nowrap}
+.vd-tab.on{background:var(--ink);color:var(--paper)}
+.vd-tab:hover:not(.on){color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="vd-tabs" aria-label="Dashboards">
+    <a class="vd-tab" href="./">Tesla · TSLA</a>
+    <a class="vd-tab on" href="spcx.html" aria-current="page">SpaceX · SPCX</a>
+  </nav>
+
+  <h1>SPCX sum-of-the-parts</h1>
+  <p class="lede">Rebuilt from Morgan Stanley's $300 base case (Adam Jonas, reiterated Sept 20, 2026). MS disclosed only the per-share value of each segment. The driver inputs below are reverse-engineered to reproduce those values, except connected devices, which start at a more conservative 50M. “Match MS” restores Morgan Stanley's $300. Every input can be changed.</p>
+
+  <div class="hero" aria-label="Per-share value by segment compared with market price and Morgan Stanley's target">
+    <svg id="ruler" viewBox="0 0 1000 150" role="img"></svg>
+  </div>
+  <div class="headline">
+    <div class="big" id="total">$—</div>
+    <div class="sub" id="totalSub"></div>
+  </div>
+
+  <div class="bar">
+    <div class="ctl"><label for="wacc">Discount rate <span class="var">r</span> <output id="waccO"></output></label><input id="wacc" type="range" min="6" max="14" step="0.25"><div class="ctx" id="c-wacc"></div></div>
+    <div class="ctl"><label for="g">Terminal growth <span class="var">g</span> <output id="gO"></output></label><input id="g" type="range" min="0" max="5" step="0.25"><div class="ctx" id="c-g"></div></div>
+    <div class="ctl"><label for="T">Horizon year <span class="var">T</span> <output id="TO"></output></label><input id="T" type="range" min="2033" max="2045" step="1"><div class="ctx" id="c-T"></div></div>
+    <div class="ctl"><label for="sh">Diluted shares (B)</label><input id="sh" type="number" min="5" max="30" step="0.1"><div class="ctx" id="c-sh"></div></div>
+    <div class="ctl"><label for="mkt">Market price ($)</label><input id="mkt" type="number" min="1" step="0.01"><div class="ctx" id="c-mkt"></div></div>
+    <div class="btns" role="group" aria-label="Scenario presets">
+      <button id="pDef" class="on">Default</button>
+      <button id="pBase">Match MS ($300)</button>
+      <button id="pBull">MS bull (~$600, illustrative)</button>
+    </div>
+  </div>
+
+  <div class="implied"><p id="implied"></p></div>
+
+  <div class="summary">
+    <div class="mix">
+      <svg id="donut" viewBox="0 0 200 200" role="img" aria-label="Segment share of total value"></svg>
+      <div class="scroll" style="flex:1 1 220px">
+        <table id="legend"><thead><tr><th>Segment</th><th>$/share</th><th>Equity value</th><th>MS</th></tr></thead><tbody></tbody><tfoot></tfoot></table>
+      </div>
+    </div>
+    <div class="sens scroll">
+      <table id="sens"><caption>Total $/share by discount rate (rows) and terminal growth (columns)</caption><thead></thead><tbody></tbody></table>
+      <p class="note">Outlined cell is the current setting. Other inputs held fixed.</p>
+    </div>
+  </div>
+
+  <p class="howto">The grey note under each input compares it with something real today and updates as you move it. Labels under a slider are reference points: select one to set the input to it. Figures marked “approx.” are from general knowledge rather than a cited source.</p>
+  <div id="segs"></div>
+
+  <section class="capex" id="capex">
+    <h2>What it costs to get there</h2>
+    <p class="lede">Capex needed to build each segment to the scale above by <span id="cxT">2040</span>, compared with what SpaceX spends today. The valuation above sets cash flow before the horizon year to zero, so this build cost is not subtracted from it.</p>
+    <div class="grid" id="cxParams"></div>
+    <div class="scroll" style="margin-top:18px"><svg id="cxChart" viewBox="0 0 1000 300" role="img" aria-label="Capex needed per year versus current spending" style="width:100%;min-width:560px;height:auto;display:block"></svg></div>
+    <div class="scroll"><table id="cxTable"><thead><tr><th>Segment</th><th>Needed by T</th><th>Needed per year</th><th>Spent in 2025</th><th>Latest run-rate</th><th>Per year vs. 2025</th></tr></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <p id="cxSummary" style="margin-top:14px"></p>
+    <div class="orb">
+      <h3>Orbital AI build cost, itemized</h3>
+      <p class="note" style="max-width:80ch">Per 1 GW of compute in a dawn–dusk orbit with near-constant sunlight. Arrays generate 1.1 GW to cover losses, and radiators reject all of it as heat. The blended cost per GW feeds the AI line above.</p>
+      <div class="btns" role="group" aria-label="Orbital presets" style="margin:10px 0 14px"><button id="oOpt">Optimistic</button><button id="oBase" class="on">Base</button><button id="oPess">Pessimistic</button></div>
+      <div class="orb-top">
+        <div class="scroll" style="flex:1 1 420px"><table id="orbTable"><thead><tr><th>Item</th><th>Sizing per GW</th><th>$B per GW</th><th>Share</th></tr></thead><tbody></tbody><tfoot></tfoot></table></div>
+        <div style="flex:1 1 300px"><svg id="orbBar" viewBox="0 0 400 170" role="img" aria-label="Orbital versus ground cost per GW" style="width:100%;height:auto;display:block"></svg></div>
+      </div>
+      <p id="orbCadence" style="margin-top:12px"></p>
+      <div class="grid" id="orbParams" style="margin-top:14px"></div>
+    </div>
+    <h3 style="margin-top:18px">Spending announced or reported so far</h3>
+    <ul class="facts">
+      <li>SpaceX capex rose from $4.4B in 2023 to $20.7B in 2025: AI $12.7B, Connectivity $4.2B, Space $3.8B (mostly Starship)<sup>[17]</sup>.</li>
+      <li>2026 so far: Q1 $10.1B (AI $7.7B)<sup>[15]</sup>, Q2 $18.37B (AI $15.83B), a run-rate of ≈ $73B a year<sup>[16]</sup>.</li>
+      <li>Funding: the IPO raised ≈ $86B<sup>[22]</sup>. Debt and finance leases reached $36.8B after Q2<sup>[16]</sup>. Anthropic pays $1.25B a month for Colossus compute through May 2029<sup>[20]</sup>.</li>
+      <li>Benchmarks: Stargate is $500B over four years for 10 GW, ≈ $50B per GW<sup>[21]</sup>. The four largest hyperscalers are spending more than $700B in 2026<sup>[10]</sup>.</li>
+    </ul>
+  </section>
+
+  <section class="method">
+    <h2>How each segment is valued</h2>
+    <p>Each segment reaches a steady state in horizon year <span class="var">T</span>, is capitalized with a Gordon growth terminal value, and is discounted to the price-target date <span class="var">t</span><sub>0</sub> = 2027 (MS's target is 12-month forward):</p>
+    <p class="eq">V<sub>seg</sub> = p · FCF<sub>T</sub> · (1+g) / [ (r − g) · (1+r)<sup>T − t₀</sup> ] ÷ N</p>
+    <p>Here <span class="var">p</span> is the probability of success and <span class="var">N</span> is diluted shares. Interim cash flows before <span class="var">T</span> are set to zero, a simplification consistent with heavy build-out capex. HSBC, for example, sees positive free cash flow only from 2030. Net cash and debt are excluded because MS's four components sum to $299 with no separate balance-sheet line. Only Starship external launches count toward Space. Launches carrying SpaceX's own Starlink or compute payloads are costs of the other segments.</p>
+    <p>What is disclosed and what is inferred: the segment $/share values ($165, $118, $8, $8), the ~5,800 Starship launches/yr by 2040, the Cursor ARR path, and the $600 bull case are from MS as reported. Every other default is a calibration, not a disclosed MS input. The share count is the $1.77T IPO valuation divided by the $135 IPO price.</p>
+    <h3>Sources</h3>
+    <ol class="refs">
+      <li><a href="https://blockspace.media/insight/morgan-stanley-spacex-ai-valuation/" target="_blank" rel="noopener">Blockspace: MS SOTP breakdown ($165 / $118 / $8 / $8), Sept 20 note</a></li>
+      <li><a href="https://finance.yahoo.com/markets/stocks/articles/spacex-stock-could-soar-300-124046609.html" target="_blank" rel="noopener">Yahoo Finance: MS $300 case, ~5,800 Starship launches/yr by 2040, Q2 Starlink figures</a></li>
+      <li><a href="https://finance.biggo.com/news/90f5f25a-1e99-412a-8ca7-1b58fd862e9d" target="_blank" rel="noopener">BigGo Finance: MS $600 bull case (~$8T), Cursor ARR path, robots on Starlink by 2040</a></li>
+      <li><a href="https://www.thestreet.com/investing/stocks/spacex-stock-ai-valuation-morgan-stanley" target="_blank" rel="noopener">TheStreet: MS framework, AI at more than 50% of value</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/Initial_public_offering_of_SpaceX" target="_blank" rel="noopener">Wikipedia: SpaceX IPO ($135, $1.77T valuation)</a></li>
+      <li><a href="https://fool.com/investing/2026/07/26/hsbc-just-started-covering-spacex-with-a-115-price/" target="_blank" rel="noopener">Motley Fool: HSBC counter-case ($115, SOTP with 2× premium)</a></li>
+      <li><a href="https://www.trendforce.com/presscenter/news/20260916-13237.html" target="_blank" rel="noopener">TrendForce: data-center power 161 GW in 2026, AI servers 33.4%</a></li>
+      <li><a href="https://www.gartner.com/en/newsroom/press-releases/2026-06-10-gartner-says-data-center-electricity-demand-to-grow-26-percent-in-2026" target="_blank" rel="noopener">Gartner: data-center power 132 GW in 2026, AI servers 31%</a></li>
+      <li><a href="https://www.supermicro.com/en/accelerators/nvidia/vera-rubin" target="_blank" rel="noopener">Supermicro: 1,152 Vera Rubin GPUs per 5 MW scalable unit</a></li>
+      <li><a href="https://www.tmtfinance.com/intel/2026-hyperscaler-capex-tops-us700bn-analysis" target="_blank" rel="noopener">TMT Finance: 2026 hyperscaler capex and free cash flow</a></li>
+      <li><a href="https://axis-intelligence.com/starlink-statistics/" target="_blank" rel="noopener">Axis Intelligence: Starlink ~12M subscribers (June 2026)</a></li>
+      <li><a href="https://spacexchart.com/starlink" target="_blank" rel="noopener">SpaceXChart: Starlink FY2025 revenue $11.4B, operating profit $4.4B (S-1)</a></li>
+      <li><a href="https://www.ericsson.com/en/reports-and-papers/mobility-report/dataforecasts/iot-connections-outlook" target="_blank" rel="noopener">Ericsson Mobility Report: ~4.5B cellular IoT connections (end-2025)</a></li>
+      <li><a href="https://iot-analytics.com/number-connected-iot-devices/" target="_blank" rel="noopener">IoT Analytics: $18.4B operator revenue from 4.1B cellular IoT connections (2024)</a></li>
+      <li><a href="https://www.sec.gov/Archives/edgar/data/0001181412/000162828026036936/spaceexplorationtechnologi.htm" target="_blank" rel="noopener">SpaceX Form S-1: AI capex by period</a></li>
+      <li><a href="https://www.cnbc.com/2026/08/04/spacex-spcx-earnings-live-updates-q2-2026.html" target="_blank" rel="noopener">CNBC: SpaceX Q2 2026 capex $18.37B (AI $15.83B), debt $36.8B</a></li>
+      <li><a href="https://www.mostlymetrics.com/p/spacex-ipo-s1-breakdown" target="_blank" rel="noopener">Mostly Metrics: 2025 capex by segment (AI $12.7B, Connectivity $4.2B, Space $3.8B)</a></li>
+      <li><a href="https://techcrunch.com/2026/07/30/tesla-made-its-10-millionth-ev/" target="_blank" rel="noopener">TechCrunch: Tesla's 10 millionth EV, 2035 pay-package goals, ~1.5M FSD subscribers</a></li>
+      <li><a href="https://stocktwits.com/news-articles/markets/equity/tesla-ceo-elon-musk-secures-1-trillion-payday-wall-street-bulls-now-betting-on-his-optimus-vision-to-deliver-it/cL2viqgRERC" target="_blank" rel="noopener">Stocktwits: Optimus capacity 1M/yr in Fremont, then 10M/yr in Austin</a></li>
+      <li><a href="https://www.trendingtopics.eu/the-spacex-ipo-prospectus-15-key-insights-from-the-s-1-filing/" target="_blank" rel="noopener">Trending Topics: S-1 insights (Starlink growth 49.8%, Anthropic $1.25B/month)</a></li>
+      <li><a href="https://axis-intelligence.com/ai-data-center-statistics/" target="_blank" rel="noopener">Axis Intelligence: Stargate $500B for 10 GW</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/SpaceX" target="_blank" rel="noopener">Wikipedia: SpaceX IPO raised $86B</a></li>
+      <li><a href="https://www.scientificamerican.com/article/data-centers-in-space/" target="_blank" rel="noopener">Scientific American: Google Suncatcher needs launch under $200/kg by 2035</a></li>
+      <li><a href="https://blog.spacecomputer.io/spacedatacenters/" target="_blank" rel="noopener">SpaceComputer: radiator at 20°C rejects ≈ 770 W/m² (both sides)</a></li>
+      <li><a href="https://angadh.com/space-data-centers-1" target="_blank" rel="noopener">Angadh Nanjangud: solar arrays 3.1 kg/m², ISS radiators 14–17 kg/m²</a></li>
+      <li><a href="https://arxiv.org/pdf/2607.14172" target="_blank" rel="noopener">arXiv 2607.14172: cost and network limits of space AI (400 W/m², 10,000 t per GW claim)</a></li>
+      <li><a href="https://pith.science/paper/2604.27197" target="_blank" rel="noopener">Pith Review: orbital data centers need 34–59 kg/kW</a></li>
+      <li><a href="https://galratner.substack.com/p/florida-man-spots-data-centers-in" target="_blank" rel="noopener">Gal Ratner: ground AI builds $30–40M/MW, Epoch $38B/GW, JLL $11.3M/MW</a></li>
+      <li><a href="https://spectrum.ieee.org/orbital-data-centers-heat" target="_blank" rel="noopener">IEEE Spectrum (ABI Research): orbital data-center cost and heat</a></li>
+    </ol>
+    <p class="note">For study only, not investment advice. Market price defaults to the Sept 23, 2026 close.</p>
+  </section>
+</div>
+
+<script>
+const T0 = 2027;
+const MS_PT = 300;
+const GLOBAL_BASE = {wacc:9, g:3, T:2040, sh:13.1, mkt:148.36};
+
+const K = {aiGW:47.5, kWgpu:5/1.152, capexGW:50, usTWh:4200, slSubs:12, slRev25:11.4, slOp25:4.4, cellIoT:4500, allIoT:21900, iotRev:18.4, iotARPU:0.37};
+const gpuPerGW = 1e6/K.kWgpu;
+const sup = n => `<sup>[${n}]</sup>`;
+const d$ = x => `$${Math.abs(x).toFixed(1)}`;
+function dS(id,k,d){ const s0=JSON.parse(JSON.stringify(S)); s0[id][k]=Math.max(0,s0[id][k]+d); return totalPS(G,s0)-totalPS(); }
+
+const SEGS = [
+  {id:'ai', name:'Enterprise AI', ms:165, color:'--c-ai', params:[
+    {k:'gw', label:'AI compute capacity in year T', unit:'GW', min:1, max:400, log:true, v:100,
+      marks:[{v:1,l:'SpaceX today'},{v:10,l:'Stargate'},{v:50,l:'World AI, 2026'}],
+      ctx:s=>`${(s.gw/K.aiGW).toFixed(1)}× all AI capacity worldwide today (≈ 41–54 GW)${sup(7)}${sup(8)}. ≈ ${(s.gw*gpuPerGW/1e6).toFixed(0)}M Rubin GPUs at ~4.3 kW each all-in${sup(9)}, ≈ $${(s.gw*K.capexGW/1000).toFixed(1)}T to build at ~$50B/GW, and ≈ ${(s.gw*8.76/K.usTWh*100).toFixed(0)}% of US electricity use (approx.).`},
+    {k:'revgw', label:'Revenue per GW-year', unit:'$B', min:4, max:20, step:0.5, v:10,
+      ctx:s=>`≈ $${(s.revgw*1e9/(gpuPerGW*8760)).toFixed(2)} per GPU-hour on a Rubin-class fleet, at 100% utilization. H100s rent for ≈ $2–3/hr today (approx.). Compute revenue: ${fmtB(s.gw*s.revgw)}/yr.`},
+    {k:'cm', label:'Compute FCF margin', unit:'%', min:10, max:60, step:1, v:35,
+      marks:[{v:28,l:'AWS after tax'}],
+      ctx:s=>`Hyperscaler FCF is ≈ 0 or negative in 2026 because capex ≈ operating cash flow${sup(10)}. At steady state, GPU replacement ≈ depreciation, so FCF margin ≈ after-tax operating margin. AWS: mid-30s pre-tax, ≈ 25–30% after tax (approx.). Each 5 pts moves value ${d$(dS('ai','cm',5))}/share.`},
+    {k:'sw', label:'Software ARR (Cursor, Grok enterprise)', unit:'$B', min:0, max:400, step:5, v:105,
+      marks:[{v:33,l:'Cursor 2030 (MS)'}],
+      ctx:s=>`${(s.sw/33).toFixed(1)}× Morgan Stanley's 2030 Cursor ARR ($33B; ~$8B at end-2026)${sup(3)}. Microsoft's total annual revenue is ≈ $280B (approx.).`},
+    {k:'sm', label:'Software FCF margin', unit:'%', min:10, max:60, step:1, v:35,
+      ctx:s=>`Mature software businesses run ≈ 30–40% FCF margins (approx.). Each 5 pts moves value ${d$(dS('ai','sm',5))}/share.`},
+    {k:'p', label:'Probability of success', unit:'%', min:0, max:100, step:5, v:100,
+      ctx:s=>`Each 10 pts moves value ${d$(dS('ai','p',-10))}/share. Morgan Stanley's reported figures show no haircut.`}],
+    rev:s=>s.gw*s.revgw+s.sw,
+    fcf:s=>s.gw*s.revgw*s.cm/100+s.sw*s.sm/100,
+    revF:s=>`${s.gw} GW × $${s.revgw}B + $${s.sw}B`,
+    fcfF:s=>`${s.cm}% · compute + ${s.sm}% · software`},
+  {id:'con', name:'Connectivity (Starlink)', ms:118, color:'--c-con', params:[
+    {k:'subs', label:'Broadband subscribers in year T', unit:'M', min:10, max:600, log:true, v:250,
+      marks:[{v:12,l:'Starlink today'},{v:300,l:'China Mobile'}],
+      ctx:s=>`${(s.subs/K.slSubs).toFixed(0)}× Starlink today (~12M, June 2026; 10.3M in the S-1)${sup(11)}. China Mobile, the largest ISP, has ≈ 300M fixed-broadband customers, and there are ≈ 1.5B fixed lines worldwide (approx.).`},
+    {k:'arpu', label:'Blended ARPU', unit:'$/mo', min:10, max:150, step:1, v:50,
+      marks:[{v:120,l:'Today, incl. enterprise'}],
+      ctx:s=>`Broadband revenue: ${fmtB(s.subs*s.arpu*12/1000)}/yr. Q2 ’26 connectivity revenue ($4.3B${sup(2)}) ÷ subscribers ≈ $120/mo, but that includes enterprise and government, which are a separate input here.`},
+    {k:'dev', label:'Connected robots, vehicles and devices', unit:'M', min:1, max:5000, log:true, v:50,
+      marks:[{v:10,l:'Teslas built'},{v:21,l:'Tesla 2035 goals'},{v:1500,l:'MS-implied'},{v:4500,l:'All cellular IoT'}],
+      ctx:s=>`${(s.dev/21).toFixed(1)}× Tesla's 2035 pay-package fleet: 20M vehicles delivered plus 1M Optimus bots. The 10M FSD subscriptions and 1M robotaxis are inside those 20M vehicles${sup(18)}. Today Tesla has built ~10M cars and has ~1.5M FSD subscriptions${sup(18)}. Musk plans Optimus capacity of 1M/yr in Fremont, then 10M/yr in Austin${sup(19)}${s.dev>21?`, so ${s.dev}M means every Tesla plus ≈ ${((s.dev-21)/10).toFixed(1)} years of full Austin output, all paying for Starlink`:''}. Morgan Stanley pictures hundreds of millions to billions of robots on the network by 2040${sup(3)}. ${(s.dev/K.cellIoT*100).toFixed(1)}% of today's cellular IoT (≈ 4.5B)${sup(13)}.`},
+    {k:'darpu', label:'Revenue per device', unit:'$/mo', min:0.25, max:30, step:0.01, v:8,
+      marks:[{v:0.37,l:'Cellular IoT avg'}],
+      ctx:s=>{const r=s.dev*s.darpu*12/1000; return `Device revenue ${fmtB(r)}/yr = ${(r/K.iotRev).toFixed(1)}× the entire cellular-IoT industry, which earns $18.4B from 4.1B connections (≈ $0.37/mo)${sup(14)}. That is ${(s.darpu/K.iotARPU).toFixed(0)}× today's average price.`}},
+    {k:'ent', label:'Enterprise, government, aviation, maritime, direct-to-cell', unit:'$B', min:0, max:500, step:5, v:200,
+      ctx:s=>`${(s.ent/K.slRev25).toFixed(0)}× Starlink's total 2025 revenue ($11.4B)${sup(12)}.`},
+    {k:'m', label:'FCF margin', unit:'%', min:10, max:80, step:1, v:56,
+      marks:[{v:39,l:'Starlink 2025 op. margin'}],
+      ctx:s=>`Starlink made $4.4B operating profit on $11.4B in 2025, a ≈ 39% operating margin before satellite capex${sup(12)}. Each 5 pts moves value ${d$(dS('con','m',5))}/share.`},
+    {k:'p', label:'Probability of success', unit:'%', min:0, max:100, step:5, v:100,
+      ctx:s=>`Each 10 pts moves value ${d$(dS('con','p',-10))}/share.`}],
+    rev:s=>s.subs*s.arpu*12/1000+s.dev*s.darpu*12/1000+s.ent,
+    fcf:s=>(s.subs*s.arpu*12/1000+s.dev*s.darpu*12/1000+s.ent)*s.m/100,
+    revF:s=>`12·(${s.subs}M × $${s.arpu} + ${s.dev}M × $${s.darpu}) + $${s.ent}B`,
+    fcfF:s=>`${s.m}% × revenue`},
+  {id:'space', name:'Space (launch, Dragon, government)', ms:8, color:'--c-space', params:[
+    {k:'launch', label:'Starship launches per year in year T', unit:'', min:100, max:10000, log:true, v:5800,
+      marks:[{v:165,l:'Falcon, 2025'},{v:5800,l:'MS 2040'}],
+      ctx:s=>`≈ ${(s.launch/365).toFixed(0)} launches a day (Morgan Stanley's 5,800 is ~16 a day${sup(2)}). SpaceX flew ≈ 165 Falcon missions in 2025 (approx.).`},
+    {k:'ext', label:'Share flown for outside customers', unit:'%', min:0, max:50, step:1, v:10,
+      ctx:s=>{const n=s.launch*s.ext/100; return `= ${n.toFixed(0)} outside-customer launches a year, ≈ ${(n/165).toFixed(1)}× SpaceX's entire 2025 cadence. The rest carry SpaceX's own Starlink and compute payloads.`}},
+    {k:'price', label:'Price per external launch', unit:'$M', min:2, max:100, step:1, v:20,
+      marks:[{v:70,l:'Falcon 9 list'}],
+      ctx:s=>`Falcon 9 lists at ≈ $70M today (approx.). External launch revenue: ${fmtB(s.launch*s.ext/100*s.price/1000)}/yr.`},
+    {k:'gov', label:'Government, crew and cargo revenue', unit:'$B', min:0, max:100, step:0.5, v:26,
+      marks:[{v:25,l:'NASA budget'}],
+      ctx:s=>`NASA's entire annual budget is ≈ $25B (approx.), so this is ${(s.gov/25).toFixed(1)}× it.`},
+    {k:'m', label:'FCF margin', unit:'%', min:5, max:70, step:1, v:50,
+      ctx:s=>`Each 5 pts moves value ${d$(dS('space','m',5))}/share.`},
+    {k:'p', label:'Probability of success', unit:'%', min:0, max:100, step:5, v:100,
+      ctx:s=>`Each 10 pts moves value ${d$(dS('space','p',-10))}/share.`}],
+    rev:s=>s.launch*s.ext/100*s.price/1000+s.gov,
+    fcf:s=>(s.launch*s.ext/100*s.price/1000+s.gov)*s.m/100,
+    revF:s=>`${s.launch} × ${s.ext}% × $${s.price}M + $${s.gov}B`,
+    fcfF:s=>`${s.m}% × revenue`},
+  {id:'xg', name:'X & Grok (consumer)', ms:8, color:'--c-xg', params:[
+    {k:'x', label:'X advertising and subscriptions', unit:'$B', min:0, max:150, step:1, v:30,
+      marks:[{v:3,l:'X today (est.)'}],
+      ctx:s=>`X brings in ≈ $2–3B a year today (approx.), so this is ≈ ${(s.x/2.5).toFixed(0)}× that. Meta's 2025 revenue was ≈ $200B (approx.).`},
+    {k:'grok', label:'Grok consumer subscriptions', unit:'$B', min:0, max:150, step:0.5, v:23,
+      ctx:s=>`= ${(s.grok*1000/360).toFixed(0)}M paying users at $30/mo.`},
+    {k:'m', label:'FCF margin', unit:'%', min:5, max:60, step:1, v:35,
+      ctx:s=>`Each 5 pts moves value ${d$(dS('xg','m',5))}/share.`},
+    {k:'p', label:'Probability of success', unit:'%', min:0, max:100, step:5, v:100,
+      ctx:s=>`Each 10 pts moves value ${d$(dS('xg','p',-10))}/share.`}],
+    rev:s=>s.x+s.grok,
+    fcf:s=>(s.x+s.grok)*s.m/100,
+    revF:s=>`$${s.x}B + $${s.grok}B`,
+    fcfF:s=>`${s.m}% × revenue`}
+];
+
+const C = {};
+const NOW = {aiGW:1, slRev:11.4, xgRev:3, cx25:{ai:12.7,con:4.2,space:3.8}, run:{ai:63.3, total:73.5}, hyper:700, ipo:86};
+const CAPEX = [
+  {id:'ai', k:'perGW', label:'Ground AI build cost per GW', unit:'$B', min:10, max:80, step:1, v:50,
+    marks:[{v:38,l:'Epoch AI'},{v:50,l:'Stargate'}],
+    ctx:()=>{const o=orbCalc(); return `Stargate is $500B for 10 GW${sup(21)}; Epoch AI models a full 1 GW build at $38B${sup(28)}. Blended with ${O.share}% orbital at $${o.total.toFixed(1)}B/GW (itemized below): $${perGW().toFixed(1)}B/GW. Needed: (${+S.ai.gw.toFixed(1)} − 1 GW today) × $${perGW().toFixed(1)}B = ${fmtB(cxReq().ai)}. SpaceX's Colossus I and II are the first gigawatt-scale cluster${sup(17)}.`}},
+  {id:'ai', k:'hw', label:'Share of AI build cost in chips and servers', unit:'%', min:30, max:90, step:1, v:70,
+    ctx:()=>`The rest is buildings, power and cooling, assumed to last 20 years. Chips are typically the majority of an AI build (approx.).`},
+  {id:'ai', k:'life', label:'Chip and server life', unit:'yrs', min:3, max:10, step:0.5, v:5,
+    ctx:()=>{const a=aiRepl(); return `Replacement capex at full scale ≈ ${fmtB(a.repl)}/yr = ${a.pct.toFixed(0)}% of compute revenue. With a ${S.ai.cm}% compute FCF margin, ${a.left>=0?`${a.left.toFixed(0)}% of revenue is left`:`replacement plus FCF already exceed revenue by ${(-a.left).toFixed(0)} pts, leaving nothing`} for power (≈ ${a.power.toFixed(0)}% at $0.08/kWh), staff and everything else.${a.left<a.power?` <span class="flag">These inputs don't add up: raise revenue per GW, lower the build cost, or lower the compute FCF margin.</span>`:''}`}},
+  {id:'con', k:'K', label:'Starlink capex per $1 of added annual revenue', unit:'×', min:0.3, max:3, step:0.05, v:1.1,
+    marks:[{v:1.1,l:'2025 actual'}],
+    ctx:()=>`2025: $4.2B of Connectivity capex${sup(17)} added ≈ $3.8B of revenue ($7.6B → $11.4B, from 49.8% growth${sup(20)}), ≈ 1.1×. Needed: ${fmtB(cxReq().con)}.`},
+  {id:'space', k:'perLaunch', label:'Starship capex per launch a year of capacity', unit:'$M', min:1, max:50, step:1, v:10,
+    ctx:()=>`${S.space.launch.toLocaleString()} launches/yr × $${C.space_perLaunch}M = ${fmtB(cxReq().space)} for vehicles, pads and propellant plants (approx. input). Pivotal's thesis needs each Starship to fly 20–50 times with cheap turnaround.`},
+  {id:'xg', k:'K', label:'X & Grok capex per $1 of added annual revenue', unit:'×', min:0, max:2, step:0.05, v:0.3,
+    ctx:()=>`Low because Grok's training compute is counted under Enterprise AI. Needed: ${fmtB(cxReq().xg)}.`}
+];
+const OPRE = {
+  base:{share:50, flight:20, payload:100, mc:4, sKg:3.1, sEff:400, sCost:0.5, rW:770, rKg:5, rCost:1000, busPct:25, busCost:1000, it:27, prem:15, links:2},
+  opt: {share:50, flight:10, payload:200, mc:2, sKg:1.5, sEff:400, sCost:0.1, rW:770, rKg:2, rCost:300, busPct:25, busCost:500, it:27, prem:0, links:1},
+  pess:{share:50, flight:100, payload:100, mc:8, sKg:3.1, sEff:400, sCost:5, rW:770, rKg:15.5, rCost:3000, busPct:25, busCost:2000, it:27, prem:40, links:5}};
+const O = {...OPRE.base};
+const OPAR = [
+  {k:'share', label:'Share of AI capacity in orbit', unit:'%', min:0, max:100, step:5,
+    ctx:()=>`${fmtGW(S.ai.gw*O.share/100)} in orbit by ${G.T}; the rest is built on the ground at the ground cost above. Morgan Stanley's bull case needs orbital data centers at massive scale${sup(3)}.`},
+  {k:'flight', label:'Starship price per flight', unit:'$M', min:2, max:200, log:true, marks:[{v:5,l:'Starcloud $5M'},{v:100,l:'$100M'}],
+    ctx:()=>{const o=orbCalc(); return `= $${o.perKg.toFixed(0)}/kg at ${O.payload} t. Google's Suncatcher needs < $200/kg by 2035${sup(23)}; ABI Research used a “highly optimistic” $44/kg${sup(29)}.`}},
+  {k:'payload', label:'Payload per flight', unit:'t', min:50, max:250, step:10, marks:[{v:100,l:'V3'},{v:200,l:'V4'}],
+    ctx:()=>`SpaceX expects 100 t on Starship V3 and possibly 200 t on V4${sup(15)}.`},
+  {k:'mc', label:'Compute mass (servers, cold plates, cabling)', unit:'kg/kW', min:1, max:12, step:0.5,
+    ctx:()=>`A ground GB200 NVL72 rack is ≈ 11 kg/kW with its steel chassis (approx.); flight hardware can be lighter.`},
+  {k:'sKg', label:'Solar array mass', unit:'kg/m²', min:0.5, max:6, step:0.1, marks:[{v:3.1,l:'ISS-type'}],
+    ctx:()=>{const o=orbCalc(); return `${o.sArea.toFixed(2)} km² of arrays per GW = ${o.sMass.toFixed(1)} kg/kW. ISS-type arrays are ≈ 3.1 kg/m²${sup(25)}.`}},
+  {k:'sEff', label:'Array output', unit:'W/m²', min:200, max:500, step:10,
+    ctx:()=>`Sunlight in orbit is 1,361 W/m²; ≈ 400 W/m² is a typical usable yield${sup(26)}. Arrays are sized for 1.1 GW to cover conversion losses.`},
+  {k:'sCost', label:'Solar array cost', unit:'$/W', min:0.05, max:10, log:true,
+    ctx:()=>`${fmtB(1.1*O.sCost)} per GW. Space-grade cells have historically cost far more; mass-produced Starlink-style arrays far less (approx.).`},
+  {k:'rW', label:'Radiator heat rejection', unit:'W/m²', min:300, max:1500, step:10, marks:[{v:770,l:'At 20°C'}],
+    ctx:()=>{const o=orbCalc(); return `${o.rArea.toFixed(2)} km² of radiator per GW. A radiator at 20°C sheds ≈ 770 W/m² from both sides${sup(24)}; running hotter shrinks it.`}},
+  {k:'rKg', label:'Radiator mass', unit:'kg/m²', min:1, max:20, step:0.5, marks:[{v:15.5,l:'ISS'}],
+    ctx:()=>{const o=orbCalc(); return `= ${o.rMass.toFixed(1)} kg/kW. ISS radiators are 14–17 kg/m²${sup(25)}; the base case assumes a 3× lighter design.`}},
+  {k:'rCost', label:'Radiator cost', unit:'$/m²', min:100, max:10000, log:true,
+    ctx:()=>{const o=orbCalc(); return `${fmtB(o.cRad)} per GW (approx. input).`}},
+  {k:'busPct', label:'Structure, power electronics, propulsion, lasers', unit:'% of mass', min:10, max:50, step:1,
+    ctx:()=>{const o=orbCalc(); return `= ${o.busMass.toFixed(1)} kg/kW on top of compute, arrays and radiators.`}},
+  {k:'busCost', label:'Satellite build and assembly cost', unit:'$/kg', min:200, max:5000, log:true,
+    ctx:()=>{const o=orbCalc(); return `${fmtB(o.cBus)} per GW (approx. input, applied to the structure mass).`}},
+  {k:'it', label:'GPUs, servers and networking on the ground', unit:'$B/GW', min:10, max:60, step:1, marks:[{v:27,l:'Ground today'}],
+    ctx:()=>`Epoch AI's $38B full build minus JLL's $11.3M/MW for building and power ≈ $27B/GW${sup(28)}.`},
+  {k:'prem', label:'Space-hardening premium on compute', unit:'%', min:0, max:60, step:1,
+    ctx:()=>`Radiation tolerance, conduction cooling and redundancy (approx. input). Compute: ${fmtB(O.it*(1+O.prem/100))} per GW.`},
+  {k:'links', label:'Laser links, ground stations, other', unit:'$B/GW', min:0, max:10, step:0.5,
+    ctx:()=>`Data has to reach users on the ground; this bandwidth is a separate bottleneck${sup(26)} (approx. input).`}
+];
+const fmtGW = v => `${+(+v).toFixed(1)} GW`;
+function orbCalc(o=O){
+  const sArea=1.1e9/o.sEff/1e6, rArea=1.1e9/o.rW/1e6;           /* km² per GW */
+  const sMass=sArea*o.sKg, rMass=rArea*o.rKg;                   /* kg/kW (km²·kg/m² = kt/GW = kg/kW) */
+  const sub=o.mc+sMass+rMass, busMass=sub*o.busPct/100, m=sub+busMass;
+  const perKg=o.flight*1e6/(o.payload*1000);
+  const cComp=o.it*(1+o.prem/100), cLaunch=m*1e6*perKg/1e9, cSolar=1.1*o.sCost, cRad=rArea*1e6*o.rCost/1e9, cBus=busMass*1e6*o.busCost/1e9;
+  const total=cComp+cLaunch+cSolar+cRad+cBus+o.links;
+  return {sArea,rArea,sMass,rMass,busMass,m,perKg,cComp,cLaunch,cSolar,cRad,cBus,cLinks:o.links,total,flightsPerGW:m*1000/o.payload};
+}
+function perGW(){ return O.share/100*orbCalc().total + (1-O.share/100)*C.ai_perGW; }
+function aiRepl(){ const s=S.ai, b=s.gw*perGW(), repl=b*C.ai_hw/100/C.ai_life + b*(1-C.ai_hw/100)/20, rev=s.gw*s.revgw;
+  const p=repl/rev*100, power=s.gw*8.76*0.08/rev*100; return {repl, pct:p, power, left:100-p-s.cm}; }
+function cxReq(){ return {
+  ai: Math.max(0,S.ai.gw-NOW.aiGW)*perGW(),
+  con: Math.max(0,SEGS[1].rev(S.con)-NOW.slRev)*C.con_K,
+  space: S.space.launch*C.space_perLaunch/1000,
+  xg: Math.max(0,SEGS[3].rev(S.xg)-NOW.xgRev)*C.xg_K }; }
+
+const BULL = {ai:{gw:205, cm:50, sw:180}};
+
+let G = {...GLOBAL_BASE};
+let S = {};
+function resetBase(){ G={...GLOBAL_BASE}; SEGS.forEach(sg=>{S[sg.id]={}; sg.params.forEach(p=>S[sg.id][p.k]=p.v);}); CAPEX.forEach(c=>C[c.id+'_'+c.k]=c.v); Object.assign(O,OPRE.base); }
+function applyMS(){ resetBase(); S.con.dev=1500; }
+function applyBull(){ applyMS(); Object.entries(BULL).forEach(([id,o])=>Object.assign(S[id],o)); }
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmtB = x => Math.abs(x)>=1000 ? `$${(x/1000).toFixed(2)}T` : `$${x.toFixed(Math.abs(x)<100?1:0)}B`;
+const fmtP = x => `$${x.toFixed(0)}`;
+
+function mult(g0=G){ const r=g0.wacc/100, g=Math.min(g0.g/100, r-0.005); return (1+g)/(r-g)/Math.pow(1+r, g0.T-T0); }
+function segVals(g0=G, s0=S){
+  const m=mult(g0);
+  return SEGS.map(sg=>{ const s=s0[sg.id]; const rev=sg.rev(s), fcf=sg.fcf(s);
+    const tv=fcf*(1+Math.min(g0.g/100,g0.wacc/100-0.005))/(g0.wacc/100-Math.min(g0.g/100,g0.wacc/100-0.005));
+    const pv=tv/Math.pow(1+g0.wacc/100,g0.T-T0);
+    const eq=fcf*m*s.p/100;
+    return {sg,rev,fcf,tv,pv,eq,ps:eq/g0.sh}; });
+}
+const totalPS = (g0=G,s0=S)=>segVals(g0,s0).reduce((a,v)=>a+v.ps,0);
+
+function buildCapexUI(){ const box=document.getElementById('cxParams');
+  box.innerHTML=CAPEX.map(c=>`<div class="param"><div class="row"><label for="cx-${c.id}-${c.k}">${c.label}</label><output id="cxo-${c.id}-${c.k}"></output></div>
+  <input type="range" id="cx-${c.id}-${c.k}" min="${c.min}" max="${c.max}" step="${c.step}">${marksHTML(c)}<div class="ctx" id="cxc-${c.id}-${c.k}"></div></div>`).join('');
+  CAPEX.forEach(c=>{ const i=document.getElementById(`cx-${c.id}-${c.k}`);
+    i.addEventListener('input',()=>{C[c.id+'_'+c.k]=+i.value; render();});
+    i.parentElement.querySelectorAll('.mk').forEach(b=>b.addEventListener('click',()=>{C[c.id+'_'+c.k]=+b.dataset.v; i.value=b.dataset.v; render();})); }); }
+function buildOrbUI(){ const box=document.getElementById('orbParams');
+  box.innerHTML=OPAR.map(p=>`<div class="param"><div class="row"><label for="or-${p.k}">${p.label}</label><output id="oro-${p.k}"></output></div>
+  <input type="range" id="or-${p.k}" min="${p.log?0:p.min}" max="${p.log?LOGN:p.max}" step="${p.log?1:p.step}">${marksHTML(p)}<div class="ctx" id="orc-${p.k}"></div></div>`).join('');
+  OPAR.forEach(p=>{ const i=document.getElementById(`or-${p.k}`);
+    i.addEventListener('input',()=>{O[p.k]=fromPos(p,i.value); setOPreset(null); render();});
+    i.parentElement.querySelectorAll('.mk').forEach(b=>b.addEventListener('click',()=>{O[p.k]=+b.dataset.v; i.value=toPos(p,+b.dataset.v); setOPreset(null); render();})); });
+  [['oOpt','opt'],['oBase','base'],['oPess','pess']].forEach(([id,k])=>document.getElementById(id).onclick=()=>{ const sh=O.share; Object.assign(O,OPRE[k]); O.share=sh; setOPreset(id); syncOrb(); render(); });
+}
+function setOPreset(id){ ['oOpt','oBase','oPess'].forEach(x=>document.getElementById(x).classList.toggle('on',x===id)); }
+function syncOrb(){ OPAR.forEach(p=>document.getElementById(`or-${p.k}`).value=toPos(p,O[p.k])); }
+function renderOrb(){
+  const o=orbCalc();
+  OPAR.forEach(p=>{ document.getElementById(`oro-${p.k}`).textContent=unitFmt(p,O[p.k]); document.getElementById(`orc-${p.k}`).innerHTML=p.ctx(); });
+  const items=[
+    ['GPUs, servers, networking', `$${O.it}B + ${O.prem}% space premium`, o.cComp, '--c-ai'],
+    ['Launch', `${o.m.toFixed(1)} kt, ${o.flightsPerGW.toFixed(0)} flights at $${o.perKg.toFixed(0)}/kg`, o.cLaunch, '--c-space'],
+    ['Solar arrays', `${o.sArea.toFixed(2)} km², ${o.sMass.toFixed(1)} kg/kW`, o.cSolar, '--c-con'],
+    ['Radiators', `${o.rArea.toFixed(2)} km², ${o.rMass.toFixed(1)} kg/kW`, o.cRad, '--c-xg'],
+    ['Structure and assembly', `${o.busMass.toFixed(1)} kg/kW`, o.cBus, '--muted'],
+    ['Laser links, ground, other', '', o.cLinks, '--rule']];
+  document.querySelector('#orbTable tbody').innerHTML=items.map(it=>`<tr><td><span class="sw" style="background:var(${it[3]})"></span>${it[0]}</td><td>${it[1]}</td><td>$${it[2].toFixed(1)}B</td><td>${(it[2]/o.total*100).toFixed(0)}%</td></tr>`).join('');
+  document.querySelector('#orbTable tfoot').innerHTML=`<tr><td>Orbital total</td><td>${o.m.toFixed(1)} kg/kW</td><td>$${o.total.toFixed(1)}B</td><td>100%</td></tr>`;
+  /* stacked bar: orbital vs ground */
+  const mx=Math.max(o.total,C.ai_perGW)*1.15, L=70, W=310, x=v=>W*v/mx; let s='', acc=0;
+  items.forEach(it=>{ s+=`<rect x="${L+x(acc)}" y="28" width="${Math.max(0,x(it[2]))}" height="34" fill="var(${it[3]})"><title>${it[0]}: $${it[2].toFixed(1)}B</title></rect>`; acc+=it[2]; });
+  s+=`<text x="${L-8}" y="50" text-anchor="end" font-size="13" fill="currentColor">Orbital</text><text x="${L+x(o.total)+5}" y="50" font-size="13" font-weight="700" fill="currentColor">$${o.total.toFixed(0)}B</text>`;
+  s+=`<rect x="${L}" y="88" width="${x(C.ai_perGW)}" height="34" fill="${css('--muted')}" opacity=".55"/><text x="${L-8}" y="110" text-anchor="end" font-size="13" fill="currentColor">Ground</text><text x="${L+x(C.ai_perGW)+5}" y="110" font-size="13" font-weight="700" fill="currentColor">$${C.ai_perGW}B</text>`;
+  s+=`<text x="${L}" y="16" font-size="12" fill="${css('--muted')}">Cost per GW of compute</text><text x="${L}" y="148" font-size="12" fill="${css('--muted')}">Blended at ${O.share}% orbital: $${perGW().toFixed(1)}B/GW</text>`;
+  const bar=document.getElementById('orbBar'); bar.style.color=css('--ink'); bar.innerHTML=s;
+  /* cadence */
+  const n=G.T-2026, og=S.ai.gw*O.share/100, build=og/n*o.flightsPerGW;
+  const refMod=og*1e6*O.mc/C.ai_life/(O.payload*1000), refAll=og*o.flightsPerGW/C.ai_life;
+  const daily=365*O.payload*1000/(o.m*1e6);
+  document.getElementById('orbCadence').innerHTML=`<strong>Launch cadence.</strong> One Starship a day adds ${daily.toFixed(1)} GW a year at these inputs. Building ${fmtGW(og)} in orbit by ${G.T} takes ≈ ${Math.round(build).toLocaleString()} flights a year (${(build/365).toFixed(1)} a day). Replacing hardware every ${C.ai_life} years adds ≈ ${Math.round(refMod).toLocaleString()} flights a year if only compute modules are swapped, or ≈ ${Math.round(refAll).toLocaleString()} (${(refAll/365).toFixed(1)} a day) if whole satellites are replaced. The Space segment assumes ${S.space.launch.toLocaleString()} Starship launches a year in total.${build+refAll>S.space.launch?` <span class="flag">Orbital AI alone needs more flights than that.</span>`:''}`;
+}
+function renderCapex(tot){
+  renderOrb();
+  const n=G.T-2026, req=cxReq(), r=G.wacc/100;
+  document.getElementById('cxT').textContent=G.T;
+  CAPEX.forEach(c=>{ document.getElementById(`cxo-${c.id}-${c.k}`).textContent=unitFmt(c,C[c.id+'_'+c.k]); document.getElementById(`cxc-${c.id}-${c.k}`).innerHTML=c.ctx(); });
+  const rows=[
+    {name:'Enterprise AI', col:'--c-ai', need:req.ai, y25:NOW.cx25.ai, run:NOW.run.ai},
+    {name:'Connectivity', col:'--c-con', need:req.con, y25:NOW.cx25.con, run:null},
+    {name:'Space', col:'--c-space', need:req.space, y25:NOW.cx25.space, run:null},
+    {name:'X & Grok', col:'--c-xg', need:req.xg, y25:null, run:null}];
+  const total=rows.reduce((a,x)=>a+x.need,0);
+  const f=x=>x==null?'—':fmtB(x);
+  document.querySelector('#cxTable tbody').innerHTML=rows.map(x=>`<tr><td><span class="sw" style="background:var(${x.col})"></span>${x.name}</td><td>${fmtB(x.need)}</td><td>${fmtB(x.need/n)}</td><td>${x.y25==null?'in AI':f(x.y25)}</td><td>${x.run==null?'—':f(x.run)}</td><td>${x.y25?`${(x.need/n/x.y25).toFixed(0)}×`:'—'}</td></tr>`).join('');
+  document.querySelector('#cxTable tfoot').innerHTML=`<tr><td>Total</td><td>${fmtB(total)}</td><td>${fmtB(total/n)}</td><td>$20.7B</td><td>${f(NOW.run.total)}</td><td>${(total/n/20.7).toFixed(0)}×</td></tr>`;
+  const all=[...rows,{name:'Total',col:'--ink',need:total,y25:20.7,run:NOW.run.total}];
+  const maxV=Math.max(total/n, NOW.hyper)*1.25, L=150, W=830, x=v=>L+W*v/maxV, rh=54;
+  let s=''; all.forEach((d,i)=>{ const y=16+i*rh, cur=d.run??d.y25;
+    s+=`<text x="${L-10}" y="${y+16}" text-anchor="end" font-size="14" font-weight="${d.name==='Total'?700:500}" fill="currentColor">${d.name}</text>`;
+    s+=`<rect x="${L}" y="${y}" width="${Math.max(1,x(d.need/n)-L)}" height="20" fill="var(${d.col})"><title>Needed per year: ${fmtB(d.need/n)}</title></rect>`;
+    s+=`<text x="${x(d.need/n)+6}" y="${y+15}" font-size="13" fill="currentColor">${fmtB(d.need/n)}/yr needed</text>`;
+    if(cur!=null){ s+=`<rect x="${L}" y="${y+24}" width="${Math.max(1,x(cur)-L)}" height="10" fill="${css('--muted')}" opacity=".55"/>
+      <text x="${x(cur)+6}" y="${y+33}" font-size="12" fill="${css('--muted')}">${fmtB(cur)} ${d.run!=null?'run-rate':'in 2025'}</text>`; } });
+  const hx=x(NOW.hyper), H=16+all.length*rh;
+  s+=`<line x1="${hx}" x2="${hx}" y1="4" y2="${H-8}" stroke="${css('--signal')}" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${hx-6}" y="${H+6}" text-anchor="end" font-size="12.5" fill="${css('--signal')}">Big-4 hyperscalers, 2026 ≈ $700B/yr</text>`;
+  const svg=document.getElementById('cxChart'); svg.setAttribute('viewBox',`0 0 1000 ${H+16}`); svg.style.color=css('--ink'); svg.innerHTML=s;
+  let pv=0; for(let k=0;k<n;k++) pv+=(total/n)/Math.pow(1+r,k);
+  const hit=pv/G.sh;
+  document.getElementById('cxSummary').innerHTML=`Building to these inputs by ${G.T} takes ≈ ${fmtB(total)} over ${n} years, ≈ ${fmtB(total/n)} a year. That is ${(total/n/NOW.run.total).toFixed(1)}× SpaceX's current run-rate and ${(total/n/NOW.hyper*100).toFixed(0)}% of what the four largest hyperscalers are spending in 2026. If none of it were funded from operating cash flow along the way, its present value (${fmtB(pv)}) would cut ≈ $${hit.toFixed(0)}/share, taking the model to ≈ $${(tot-hit).toFixed(0)}. Operating cash flow earned during the build would offset part of that.`;
+}
+function unitFmt(p,v){ if(p.unit==='%')return `${v}%`; if(p.unit==='$B')return `$${v}B`; if(p.unit==='$M')return `$${v}M`; if(p.unit==='$/mo')return `$${+v.toFixed(2)}/mo`; if(p.unit==='GW')return `${+(+v).toFixed(1)} GW`; if(p.unit==='×')return `${(+v).toFixed(2)}×`; if(p.unit==='yrs')return `${v} yrs`; if(p.unit==='M')return `${v.toLocaleString()}M`; if(p.unit==='$/W')return `$${v}/W`; if(p.unit==='$/m²')return `$${(+v).toLocaleString()}/m²`; if(p.unit==='$/kg')return `$${(+v).toLocaleString()}/kg`; if(p.unit)return `${v} ${p.unit}`; return v.toLocaleString(); }
+const LOGN=1000;
+function nice(v){ if(v<=0) return 0; const e=Math.pow(10,Math.floor(Math.log10(v))-1); return +(Math.round(v/e)*e).toPrecision(2); }
+const toPos=(p,v)=>p.log?Math.round(LOGN*Math.log(v/p.min)/Math.log(p.max/p.min)):v;
+const fromPos=(p,x)=>p.log?nice(p.min*Math.pow(p.max/p.min,x/LOGN)):+x;
+const pct=(p,v)=>p.log?100*Math.log(v/p.min)/Math.log(p.max/p.min):(v-p.min)/(p.max-p.min)*100;
+function marksHTML(p){ return p.marks?`<div class="marks">${p.marks.map(m=>{const pc=pct(p,m.v); return `<button type="button" class="mk${pc<10?' l':pc>90?' r':''}" style="left:${pc}%" data-v="${m.v}" aria-label="Set to ${m.l}: ${unitFmt(p,m.v)}">${m.l}</button>`;}).join('')}</div>`:''; }
+function layoutMarks(){ document.querySelectorAll('.marks').forEach(c=>{ const bs=[...c.querySelectorAll('.mk')];
+  bs.forEach(b=>{b.style.top='0px'; b.style.setProperty('--row',0);});
+  const items=bs.map(b=>{const r=b.getBoundingClientRect(); return {b,l:r.left,r:r.right};}).sort((a,b)=>a.l-b.l);
+  const ends=[]; items.forEach(it=>{ let row=ends.findIndex(e=>it.l>e+8); if(row<0){row=ends.length; ends.push(it.r);} else ends[row]=it.r;
+    it.b.style.top=(row*15)+'px'; it.b.style.setProperty('--row',row); });
+  c.style.height=(26+Math.max(0,ends.length-1)*15)+'px'; }); }
+addEventListener('resize',()=>layoutMarks());
+/* build segment UI */
+const segBox=document.getElementById('segs');
+SEGS.forEach(sg=>{
+  const el=document.createElement('section'); el.className='seg'; el.style.setProperty('--seg',`var(${sg.color})`);
+  el.innerHTML=`<div class="seg-head"><h2>${sg.name}</h2><div><span class="seg-val" id="v-${sg.id}"></span> <span class="seg-ms">MS: $${sg.ms}/share</span></div></div>
+  <div class="grid">${sg.params.map(p=>`<div class="param"><div class="row"><label for="${sg.id}-${p.k}">${p.label}</label><output id="o-${sg.id}-${p.k}"></output></div>
+  <input type="range" id="${sg.id}-${p.k}" min="${p.log?0:p.min}" max="${p.log?LOGN:p.max}" step="${p.log?1:p.step}">${marksHTML(p)}<div class="ctx" id="c-${sg.id}-${p.k}"></div></div>`).join('')}</div>
+  <div class="flow" id="f-${sg.id}"></div>`;
+  segBox.appendChild(el);
+  sg.params.forEach(p=>{ const i=el.querySelector(`#${sg.id}-${p.k}`); i.addEventListener('input',()=>{S[sg.id][p.k]=fromPos(p,i.value); clearPreset(); render();});
+    i.parentElement.querySelectorAll('.mk').forEach(b=>b.addEventListener('click',()=>{S[sg.id][p.k]=+b.dataset.v; i.value=toPos(p,+b.dataset.v); clearPreset(); render();})); });
+});
+
+/* globals */
+const ids=['wacc','g','T'];
+ids.forEach(k=>document.getElementById(k).addEventListener('input',e=>{G[k]=+e.target.value; clearPreset(); render();}));
+['sh','mkt'].forEach(k=>document.getElementById(k).addEventListener('input',e=>{const v=+e.target.value; if(v>0){G[k]=v; render();}}));
+const pDef=document.getElementById('pDef'), pBase=document.getElementById('pBase'), pBull=document.getElementById('pBull');
+pDef.onclick=()=>{resetBase(); setPreset(pDef); syncInputs(); syncOrb(); setOPreset('oBase'); render();};
+pBase.onclick=()=>{applyMS(); setPreset(pBase); syncInputs(); syncOrb(); setOPreset('oBase'); render();};
+pBull.onclick=()=>{applyBull(); setPreset(pBull); syncInputs(); syncOrb(); setOPreset('oBase'); render();};
+function setPreset(b){[pDef,pBase,pBull].forEach(x=>x.classList.toggle('on',x===b));}
+function clearPreset(){[pDef,pBase,pBull].forEach(x=>x.classList.remove('on'));}
+function syncInputs(){
+  ids.forEach(k=>document.getElementById(k).value=G[k]);
+  document.getElementById('sh').value=G.sh; document.getElementById('mkt').value=G.mkt;
+  SEGS.forEach(sg=>sg.params.forEach(p=>document.getElementById(`${sg.id}-${p.k}`).value=toPos(p,S[sg.id][p.k])));
+  CAPEX.forEach(c=>document.getElementById(`cx-${c.id}-${c.k}`).value=C[c.id+'_'+c.k]);
+}
+
+function render(){
+  const vals=segVals(), tot=vals.reduce((a,v)=>a+v.ps,0);
+  const gEff=Math.min(G.g, G.wacc-0.5);
+  document.getElementById('waccO').textContent=`${G.wacc.toFixed(2)}%`;
+  document.getElementById('gO').textContent=`${gEff.toFixed(2)}%`+(gEff<G.g?' (capped at r − 0.5%)':'');
+  document.getElementById('TO').textContent=G.T;
+  const up=tot/G.mkt-1;
+  document.getElementById('total').textContent=`$${tot.toFixed(0)}`;
+  document.getElementById('totalSub').innerHTML=`per share. Equity value ${fmtB(tot*G.sh)}. <span class="${up>=0?'up':'down'}">${up>=0?'+':''}${(up*100).toFixed(0)}%</span> vs. market $${G.mkt.toFixed(2)}. MS target $${MS_PT}.`;
+
+  /* global context */
+  { const r=G.wacc/100, g=gEff/100, n=G.T-T0;
+    const up1=totalPS({...G,wacc:G.wacc+1})-tot;
+    document.getElementById('c-wacc').innerHTML=`+1 pt ${up1<0?'cuts':'adds'} ${d$(up1)}/share. Mega-cap tech is often modeled at ≈ 8–9%, pre-profit growth at ≈ 10–12% (approx.).`;
+    document.getElementById('c-g').innerHTML=`Terminal value = ${((1+g)/(r-g)).toFixed(1)}× final-year FCF. Long-run inflation targets are ≈ 2% and nominal GDP growth ≈ 4%. Growth above GDP forever means outgrowing the economy.`;
+    document.getElementById('c-T').innerHTML=`Discount factor 1/(1+r)^${n} = ${(1/Math.pow(1+r,n)).toFixed(2)}. Each year of delay cuts value by ≈ ${((1-1/(1+r))*100).toFixed(1)}%. HSBC sees positive FCF only from 2030${sup(6)}.`;
+    document.getElementById('c-sh').innerHTML=`$1.77T IPO valuation ÷ $135 IPO price ≈ 13.1B${sup(5)}. Market cap at the market price: ${fmtB(G.mkt*G.sh)}.`;
+    document.getElementById('c-mkt').innerHTML=`Sept 23, 2026 close. IPO price was $135 and the post-IPO high $225.64.`; }
+
+  /* segments */
+  vals.forEach(v=>{ const sg=v.sg, s=S[sg.id];
+    document.getElementById(`v-${sg.id}`).textContent=`$${v.ps.toFixed(0)}/share`;
+    sg.params.forEach(p=>{ document.getElementById(`o-${sg.id}-${p.k}`).textContent=unitFmt(p,s[p.k]); if(p.ctx) document.getElementById(`c-${sg.id}-${p.k}`).innerHTML=p.ctx(s); });
+    document.getElementById(`f-${sg.id}`).innerHTML=[
+      ['Revenue in '+G.T, sg.revF(s), fmtB(v.rev)],
+      ['Free cash flow', sg.fcfF(s), fmtB(v.fcf)],
+      ['Terminal value', 'FCF·(1+g)/(r−g)', fmtB(v.tv)],
+      ['Discounted to 2027', `TV/(1+r)^${G.T-T0}`, fmtB(v.pv)],
+      ['Risked equity value', `× p = ${s.p}%`, fmtB(v.eq)],
+      ['Per share', `÷ ${G.sh}B shares`, `$${v.ps.toFixed(1)}`]
+    ].map((x,i,a)=>`<div class="step${i===a.length-1?' last':''}"><div>${x[0]}</div><div class="f">${x[1]}</div><div class="n">${x[2]}</div></div>`).join('');
+  });
+
+  /* legend */
+  document.querySelector('#legend tbody').innerHTML=vals.map(v=>`<tr><td><span class="sw" style="background:var(${v.sg.color})"></span>${v.sg.name}</td><td>$${v.ps.toFixed(1)}</td><td>${fmtB(v.eq)}</td><td>$${v.sg.ms}</td></tr>`).join('');
+  document.querySelector('#legend tfoot').innerHTML=`<tr><td>Total</td><td>$${tot.toFixed(1)}</td><td>${fmtB(tot*G.sh)}</td><td>$299</td></tr>`;
+
+  drawDonut(vals,tot); drawRuler(vals,tot); drawSens(); drawImplied(tot); renderCapex(tot);
+}
+
+function drawDonut(vals,tot){
+  const C=2*Math.PI*70; let off=0;
+  let h=`<circle cx="100" cy="100" r="70" fill="none" stroke="${css('--rule')}" stroke-width="28"/>`;
+  if(tot>0) vals.forEach(v=>{ const len=v.ps/tot*C;
+    h+=`<circle cx="100" cy="100" r="70" fill="none" stroke="var(${v.sg.color})" stroke-width="28" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 100 100)"><title>${v.sg.name}: ${(v.ps/tot*100).toFixed(0)}%</title></circle>`; off+=len; });
+  const ai=tot>0?vals[0].ps/tot*100:0;
+  h+=`<text x="100" y="98" text-anchor="middle" font-size="26" font-weight="800" fill="currentColor">${ai.toFixed(0)}%</text><text x="100" y="118" text-anchor="middle" font-size="12" fill="${css('--muted')}">from AI</text>`;
+  const d=document.getElementById('donut'); d.style.color=css('--ink'); d.innerHTML=h;
+}
+
+function drawRuler(vals,tot){
+  const top=Math.max(350, tot*1.08, G.mkt*1.08, MS_PT*1.08); const max=Math.ceil(top/50)*50;
+  const L=10,R=990,W=R-L, x=v=>L+W*Math.min(v,max)/max, y=52, hgt=38;
+  let h=''; let acc=0;
+  vals.forEach(v=>{ const x0=x(acc); acc+=v.ps; const x1=x(acc);
+    h+=`<rect class="stack" x="${x0}" y="${y}" width="${Math.max(0,x1-x0)}" height="${hgt}" fill="var(${v.sg.color})"><title>${v.sg.name}: $${v.ps.toFixed(0)}</title></rect>`; });
+  const step=max>800?100:50;
+  for(let t=0;t<=max;t+=step){ h+=`<line x1="${x(t)}" x2="${x(t)}" y1="${y+hgt}" y2="${y+hgt+6}" stroke="${css('--muted')}"/><text class="tick" x="${x(t)}" y="${y+hgt+22}" text-anchor="middle">$${t}</text>`; }
+  h+=`<line x1="${L}" x2="${R}" y1="${y+hgt}" y2="${y+hgt}" stroke="${css('--muted')}"/>`;
+  const mk=(v,label,col,dash,above)=>{ const X=x(v); const anchor=X>900?'end':(X<90?'start':'middle');
+    return `<line x1="${X}" x2="${X}" y1="${above?18:y}" y2="${above?y+hgt:y+hgt+34}" stroke="${col}" stroke-width="2" ${dash?'stroke-dasharray="5 4"':''}/>
+    <text class="mark-label" x="${X}" y="${above?12:y+hgt+48}" text-anchor="${anchor}" fill="${col}">${label}</text>`; };
+  h+=mk(G.mkt,`Market $${G.mkt.toFixed(0)}`,css('--signal'),false,true);
+  h+=mk(MS_PT,`MS target $${MS_PT}`,css('--ink'),true,false);
+  document.getElementById('ruler').innerHTML=h;
+}
+
+function drawSens(){
+  const rs=[7,8,9,10,11], gs=[2,2.5,3,3.5,4];
+  document.querySelector('#sens thead').innerHTML=`<tr><th>r \\ g</th>${gs.map(g=>`<th>${g}%</th>`).join('')}</tr>`;
+  document.querySelector('#sens tbody').innerHTML=rs.map(r=>`<tr><th>${r}%</th>${gs.map(g=>{ const v=totalPS({...G,wacc:r,g}); const cur=Math.abs(r-G.wacc)<1e-9&&Math.abs(g-G.g)<1e-9; return `<td class="${cur?'cur':''}">$${v.toFixed(0)}</td>`;}).join('')}</tr>`).join('');
+}
+
+function drawImplied(tot){
+  /* linear in AI compute GW */
+  const s0=JSON.parse(JSON.stringify(S)); s0.ai.gw=0; const a=totalPS(G,s0); s0.ai.gw=1; const b=totalPS(G,s0)-a;
+  const gw=(G.mkt-a)/b;
+  /* bisection for discount rate */
+  let lo=G.g+0.6, hi=40, rImp=null;
+  const f=r=>totalPS({...G,wacc:r})-G.mkt;
+  if(f(lo)>0 && f(hi)<0){ for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(f(mid)>0) lo=mid; else hi=mid; } rImp=(lo+hi)/2; }
+  const gwTxt = gw<0 ? `everything except AI compute is already worth more than the market price, so the market implies zero AI compute in ${G.T}`
+                     : `the market price implies <strong>${gw.toFixed(0)} GW</strong> of AI compute in ${G.T}, versus ${S.ai.gw} GW here`;
+  const rTxt = rImp ? `, or equivalently a discount rate of <strong>${rImp.toFixed(1)}%</strong> on every current input` : '';
+  document.getElementById('implied').innerHTML=`Holding all other inputs fixed, ${gwTxt}${rTxt}.`;
+}
+
+buildCapexUI(); buildOrbUI(); resetBase(); syncInputs(); syncOrb(); render(); layoutMarks();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+</script>
+</body>
+</html>
