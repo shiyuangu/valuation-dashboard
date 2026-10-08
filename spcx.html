@@ -10,7 +10,7 @@
 <style>
 :root{
   --paper:#EEF1F4; --panel:#F8FAFC; --ink:#14213D; --muted:#56657C; --rule:#C9D2DD;
-  --c-ai:#2E4BD8; --c-con:#138A77; --c-space:#C98A00; --c-xg:#7E8499; --c-mob:#B5469B;
+  --c-ai:#2E4BD8; --c-con:#138A77; --c-space:#C98A00; --c-xg:#7E8499;
   --signal:#C8374B; --focus:#2E4BD8;
   --sans:"Archivo", "Helvetica Neue", Arial, sans-serif;
   --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
@@ -21,12 +21,12 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --paper:#0F1726; --panel:#162033; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3850;
-    --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --c-mob:#E079C4; --signal:#FF6B7F; --focus:#8FA2FF;
+    --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --signal:#FF6B7F; --focus:#8FA2FF;
   }
 }
 :root[data-theme="dark"]{
   --paper:#0F1726; --panel:#162033; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3850;
-  --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --c-mob:#E079C4; --signal:#FF6B7F; --focus:#8FA2FF;
+  --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --signal:#FF6B7F; --focus:#8FA2FF;
 }
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -130,7 +130,7 @@ ol.refs li{margin-bottom:4px}
   </nav>
 
   <h1>SPCX sum-of-the-parts</h1>
-  <p class="lede">Rebuilt from Morgan Stanley's $300 base case (Adam Jonas, reiterated Sept 20, 2026). MS disclosed only the per-share value of each segment. The driver inputs below are reverse-engineered to reproduce those values, except connected devices, which start at a more conservative 50M. Starlink Mobile is an added segment that MS does not break out (it may sit inside the $118 Connectivity value), so it is also reverse-engineered, from spectrum purchases and carrier benchmarks. “Match MS” restores Morgan Stanley's $300 by setting Starlink Mobile's probability to 0%. Every input can be changed.</p>
+  <p class="lede">Rebuilt from Morgan Stanley's $300 base case (Adam Jonas, reiterated Sept 20, 2026). MS disclosed only the per-share value of each segment. The driver inputs below are reverse-engineered to reproduce those values, except connected devices, which start at a more conservative 50M. Starlink Mobile is folded into Connectivity but MS does not break it out (it may already sit inside the $118), so its inputs are also reverse-engineered, from spectrum purchases and carrier benchmarks. “Match MS” restores Morgan Stanley's $300 by setting mobile subscribers to 0. Every input can be changed.</p>
 
   <div class="hero" aria-label="Per-share value by segment compared with market price and Morgan Stanley's target">
     <svg id="ruler" viewBox="0 0 1000 150" role="img"></svg>
@@ -199,7 +199,7 @@ ol.refs li{margin-bottom:4px}
     <p>Each segment reaches a steady state in horizon year <span class="var">T</span>, is capitalized with a Gordon growth terminal value, and is discounted to the price-target date <span class="var">t</span><sub>0</sub> = 2027 (MS's target is 12-month forward):</p>
     <p class="eq">V<sub>seg</sub> = p · FCF<sub>T</sub> · (1+g) / [ (r − g) · (1+r)<sup>T − t₀</sup> ] ÷ N</p>
     <p>Here <span class="var">p</span> is the probability of success and <span class="var">N</span> is diluted shares. Interim cash flows before <span class="var">T</span> are set to zero, a simplification consistent with heavy build-out capex. HSBC, for example, sees positive free cash flow only from 2030. Net cash and debt are excluded because MS's four components sum to $299 with no separate balance-sheet line. Only Starship external launches count toward Space. Launches carrying SpaceX's own Starlink or compute payloads are costs of the other segments.</p>
-    <p>What is disclosed and what is inferred: the segment $/share values ($165, $118, $8, $8), the ~5,800 Starship launches/yr by 2040, the Cursor ARR path, and the $600 bull case are from MS as reported. Starlink Mobile is not a disclosed MS segment at all: its subscriber, price, margin and probability inputs are my own calibration (about $3/share, ≈ $36B of equity, by default; FutureSearch's third-party estimate is $75B), and MS may already include mobile inside the $118 Connectivity value, so the default total can double count it. Every other default is a calibration, not a disclosed MS input. The share count is the $1.77T IPO valuation divided by the $135 IPO price.</p>
+    <p>What is disclosed and what is inferred: the segment $/share values ($165, $118, $8, $8), the ~5,800 Starship launches/yr by 2040, the Cursor ARR path, and the $600 bull case are from MS as reported. Starlink Mobile is not separately disclosed by MS. It sits inside Connectivity, and its subscriber and price inputs are my own calibration (about $4/share by default; FutureSearch's third-party estimate is $75B, ≈ $6/share). It shares Connectivity's FCF margin and probability (100%). MS may already include mobile in the $118, so the default total can double count it. Every other default is a calibration, not a disclosed MS input. The share count is the $1.77T IPO valuation divided by the $135 IPO price.</p>
     <h3>Sources</h3>
     <ol class="refs">
       <li><a href="https://blockspace.media/insight/morgan-stanley-spacex-ai-valuation/" target="_blank" rel="noopener">Blockspace: MS SOTP breakdown ($165 / $118 / $8 / $8), Sept 20 note</a></li>
@@ -279,6 +279,12 @@ const SEGS = [
     {k:'arpu', label:'Blended ARPU', unit:'$/mo', min:10, max:150, step:1, v:50,
       marks:[{v:120,l:'Today, incl. enterprise'}],
       ctx:s=>`Broadband revenue: ${fmtB(s.subs*s.arpu*12/1000)}/yr. Q2 ’26 connectivity revenue ($4.3B${sup(2)}) ÷ subscribers ≈ $120/mo, but that includes enterprise and government, which are a separate input here.`},
+    {k:'msubs', label:'Starlink Mobile phone subscribers in year T (reverse-engineered)', unit:'M', min:0, max:600, step:5, v:100,
+      marks:[{v:130,l:'T-Mobile US ≈ 130M'},{v:300,l:'US lines ≈ 400M'}],
+      ctx:s=>`Not an MS input: MS does not break mobile out, and it may already sit inside the $118. ${(s.msubs/130).toFixed(1)}× T-Mobile US's customer base (≈ 130M, approx.). These are phone subscribers on a separate direct-to-device constellation plus terrestrial spectrum${sup(30)}${sup(31)}, not the dish customers above; no consumer phone plan existed at the time of writing. “Match MS” sets this to 0. Susquehanna rates mobile “less likely” than broadband${sup(33)}.`},
+    {k:'marpu', label:'Starlink Mobile revenue per subscriber (reverse-engineered)', unit:'$/mo', min:3, max:80, step:1, v:15,
+      marks:[{v:10,l:'T-Mobile D2C add-on $10'},{v:45,l:'US wireless avg ≈ $45'}],
+      ctx:s=>`Mobile revenue: ${fmtB(s.msubs*s.marpu*12/1000)}/yr. Direct-to-cell has sold as a ≈ $10/mo add-on to another carrier's plan${sup(32)}; a full US plan averages ≈ $45/mo (approx.). The default blends wholesale (EchoStar's Boost Mobile) and retail. Uses the FCF margin and probability below, shared with the rest of Connectivity.`},
     {k:'dev', label:'Connected robots, vehicles and devices', unit:'M', min:1, max:5000, log:true, v:50,
       marks:[{v:10,l:'Teslas built'},{v:21,l:'Tesla 2035 goals'},{v:1500,l:'MS-implied'},{v:4500,l:'All cellular IoT'}],
       ctx:s=>`${(s.dev/21).toFixed(1)}× Tesla's 2035 pay-package fleet: 20M vehicles delivered plus 1M Optimus bots. The 10M FSD subscriptions and 1M robotaxis are inside those 20M vehicles${sup(18)}. Today Tesla has built ~10M cars and has ~1.5M FSD subscriptions${sup(18)}. Musk plans Optimus capacity of 1M/yr in Fremont, then 10M/yr in Austin${sup(19)}${s.dev>21?`, so ${s.dev}M means every Tesla plus ≈ ${((s.dev-21)/10).toFixed(1)} years of full Austin output, all paying for Starlink`:''}. Morgan Stanley pictures hundreds of millions to billions of robots on the network by 2040${sup(3)}. ${(s.dev/K.cellIoT*100).toFixed(1)}% of today's cellular IoT (≈ 4.5B)${sup(13)}.`},
@@ -292,9 +298,9 @@ const SEGS = [
       ctx:s=>`Starlink made $4.4B operating profit on $11.4B in 2025, a ≈ 39% operating margin before satellite capex${sup(12)}. Each 5 pts moves value ${d$(dS('con','m',5))}/share.`},
     {k:'p', label:'Probability of success', unit:'%', min:0, max:100, step:5, v:100,
       ctx:s=>`Each 10 pts moves value ${d$(dS('con','p',-10))}/share.`}],
-    rev:s=>s.subs*s.arpu*12/1000+s.dev*s.darpu*12/1000+s.ent,
-    fcf:s=>(s.subs*s.arpu*12/1000+s.dev*s.darpu*12/1000+s.ent)*s.m/100,
-    revF:s=>`12·(${s.subs}M × $${s.arpu} + ${s.dev}M × $${s.darpu}) + $${s.ent}B`,
+    rev:s=>s.subs*s.arpu*12/1000+s.msubs*s.marpu*12/1000+s.dev*s.darpu*12/1000+s.ent,
+    fcf:s=>(s.subs*s.arpu*12/1000+s.msubs*s.marpu*12/1000+s.dev*s.darpu*12/1000+s.ent)*s.m/100,
+    revF:s=>`12·(${s.subs}M × $${s.arpu} + ${s.msubs}M × $${s.marpu} + ${s.dev}M × $${s.darpu}) + $${s.ent}B`,
     fcfF:s=>`${s.m}% × revenue`},
   {id:'space', name:'Space (launch, Dragon, government)', ms:8, color:'--c-space', params:[
     {k:'launch', label:'Starship launches per year in year T', unit:'', min:100, max:10000, log:true, v:5800,
@@ -329,22 +335,6 @@ const SEGS = [
     rev:s=>s.x+s.grok,
     fcf:s=>(s.x+s.grok)*s.m/100,
     revF:s=>`$${s.x}B + $${s.grok}B`,
-    fcfF:s=>`${s.m}% × revenue`},
-  {id:'mob', name:'Starlink Mobile (phone service)', ms:null, color:'--c-mob', params:[
-    {k:'subs', label:'Phone subscribers in year T', unit:'M', min:5, max:600, log:true, v:150,
-      marks:[{v:130,l:'T-Mobile US ≈ 130M'},{v:300,l:'US lines ≈ 400M'}],
-      ctx:s=>`Reverse-engineered, not an MS input. ${(s.subs/130).toFixed(1)}× T-Mobile US's customer base (≈ 130M, approx.). This is phone subscribers on a separate direct-to-device constellation plus terrestrial spectrum${sup(30)}${sup(31)}, not the broadband dish customers above. Starlink had no consumer phone plan at the time of writing.`},
-    {k:'arpu', label:'Revenue per subscriber', unit:'$/mo', min:3, max:80, step:1, v:15,
-      marks:[{v:10,l:'T-Mobile D2C add-on $10'},{v:45,l:'US wireless avg ≈ $45'}],
-      ctx:s=>`Mobile revenue: ${fmtB(s.subs*s.arpu*12/1000)}/yr. Direct-to-cell has so far sold as a ≈ $10/mo add-on to another carrier's plan${sup(32)}; a full carrier plan averages ≈ $45/mo in the US (approx.). The default blends wholesale (EchoStar's Boost Mobile) and retail.`},
-    {k:'m', label:'FCF margin', unit:'%', min:10, max:60, step:1, v:40,
-      marks:[{v:39,l:'Starlink 2025 op. margin'}],
-      ctx:s=>`Carriers run ≈ 15–25% free-cash-flow margins after spectrum and network capex (approx.); the default borrows Starlink's 39% operating margin${sup(12)} because the satellite network is asset-light per subscriber. Each 5 pts moves value ${d$(dS('mob','m',5))}/share.`},
-    {k:'p', label:'Probability of success', unit:'%', min:0, max:100, step:5, v:60,
-      ctx:s=>`Each 10 pts moves value ${d$(dS('mob','p',-10))}/share. Needs the next-generation satellites (planned 2027) and FCC approval of pending spectrum purchases. Susquehanna rates mobile connectivity “less likely” than broadband${sup(33)}. “Match MS” sets this to 0%.`}],
-    rev:s=>s.subs*s.arpu*12/1000,
-    fcf:s=>s.subs*s.arpu*12/1000*s.m/100,
-    revF:s=>`${s.subs}M × $${s.arpu} × 12`,
     fcfF:s=>`${s.m}% × revenue`}
 ];
 
@@ -363,10 +353,8 @@ const CAPEX = [
     ctx:()=>`2025: $4.2B of Connectivity capex${sup(17)} added ≈ $3.8B of revenue ($7.6B → $11.4B, from 49.8% growth${sup(20)}), ≈ 1.1×. Needed: ${fmtB(cxReq().con)}.`},
   {id:'space', k:'perLaunch', label:'Starship capex per launch a year of capacity', unit:'$M', min:1, max:50, step:1, v:10,
     ctx:()=>`${S.space.launch.toLocaleString()} launches/yr × $${C.space_perLaunch}M = ${fmtB(cxReq().space)} for vehicles, pads and propellant plants (approx. input). Pivotal's thesis needs each Starship to fly 20–50 times with cheap turnaround.`},
-  {id:'mob', k:'K', label:'Starlink Mobile network capex per $1 of annual revenue', unit:'×', min:0.3, max:3, step:0.05, v:1.1,
-    ctx:()=>`Assumes the same capital intensity as Connectivity's 2025 ratio (approx. input), for next-generation satellites and ground network. Needed: ${fmtB(cxReq().mob)} including spectrum.`},
-  {id:'mob', k:'spec', label:'Spectrum purchases', unit:'$B', min:0, max:60, step:1, v:23,
-    ctx:()=>`EchoStar AWS-4 and H-block: ≈ $17B${sup(30)}. Grain 800 MHz: ≈ $6B asking price, not a confirmed price${sup(31)}. Added to the capex need once, not scaled by revenue.`},
+  {id:'con', k:'spec', label:'Starlink Mobile spectrum purchases', unit:'$B', min:0, max:60, step:1, v:23,
+    ctx:()=>`EchoStar AWS-4 and H-block: ≈ $17B${sup(30)}. Grain 800 MHz: ≈ $6B asking price, not a confirmed price${sup(31)}. Added to Connectivity's capex need once, not scaled by revenue; zero when mobile subscribers are zero.`},
   {id:'xg', k:'K', label:'X & Grok capex per $1 of added annual revenue', unit:'×', min:0, max:2, step:0.05, v:0.3,
     ctx:()=>`Low because Grok's training compute is counted under Enterprise AI. Needed: ${fmtB(cxReq().xg)}.`}
 ];
@@ -422,9 +410,8 @@ function aiRepl(){ const s=S.ai, b=s.gw*perGW(), repl=b*C.ai_hw/100/C.ai_life + 
   const p=repl/rev*100, power=s.gw*8.76*0.08/rev*100; return {repl, pct:p, power, left:100-p-s.cm}; }
 function cxReq(){ return {
   ai: Math.max(0,S.ai.gw-NOW.aiGW)*perGW(),
-  con: Math.max(0,SEGS[1].rev(S.con)-NOW.slRev)*C.con_K,
+  con: Math.max(0,SEGS[1].rev(S.con)-NOW.slRev)*C.con_K + (S.con.msubs>0?C.con_spec:0),
   space: S.space.launch*C.space_perLaunch/1000,
-  mob: SEGS[4].rev(S.mob)*C.mob_K*S.mob.p/100 + C.mob_spec*S.mob.p/100,
   xg: Math.max(0,SEGS[3].rev(S.xg)-NOW.xgRev)*C.xg_K }; }
 
 const BULL = {ai:{gw:205, cm:50, sw:180}};
@@ -432,7 +419,7 @@ const BULL = {ai:{gw:205, cm:50, sw:180}};
 let G = {...GLOBAL_BASE};
 let S = {};
 function resetBase(){ G={...GLOBAL_BASE}; SEGS.forEach(sg=>{S[sg.id]={}; sg.params.forEach(p=>S[sg.id][p.k]=p.v);}); CAPEX.forEach(c=>C[c.id+'_'+c.k]=c.v); Object.assign(O,OPRE.base); }
-function applyMS(){ resetBase(); S.con.dev=1500; S.mob.p=0; }
+function applyMS(){ resetBase(); S.con.dev=1500; S.con.msubs=0; }
 function applyBull(){ applyMS(); Object.entries(BULL).forEach(([id,o])=>Object.assign(S[id],o)); }
 
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -500,11 +487,10 @@ function renderCapex(tot){
     {name:'Enterprise AI', col:'--c-ai', need:req.ai, y25:NOW.cx25.ai, run:NOW.run.ai},
     {name:'Connectivity', col:'--c-con', need:req.con, y25:NOW.cx25.con, run:null},
     {name:'Space', col:'--c-space', need:req.space, y25:NOW.cx25.space, run:null},
-    {name:'Starlink Mobile', col:'--c-mob', need:req.mob, y25:null, run:null, inn:'in Connectivity'},
-    {name:'X & Grok', col:'--c-xg', need:req.xg, y25:null, run:null, inn:'in AI'}];
+    {name:'X & Grok', col:'--c-xg', need:req.xg, y25:null, run:null}];
   const total=rows.reduce((a,x)=>a+x.need,0);
   const f=x=>x==null?'—':fmtB(x);
-  document.querySelector('#cxTable tbody').innerHTML=rows.map(x=>`<tr><td><span class="sw" style="background:var(${x.col})"></span>${x.name}</td><td>${fmtB(x.need)}</td><td>${fmtB(x.need/n)}</td><td>${x.y25==null?x.inn:f(x.y25)}</td><td>${x.run==null?'—':f(x.run)}</td><td>${x.y25?`${(x.need/n/x.y25).toFixed(0)}×`:'—'}</td></tr>`).join('');
+  document.querySelector('#cxTable tbody').innerHTML=rows.map(x=>`<tr><td><span class="sw" style="background:var(${x.col})"></span>${x.name}</td><td>${fmtB(x.need)}</td><td>${fmtB(x.need/n)}</td><td>${x.y25==null?'in AI':f(x.y25)}</td><td>${x.run==null?'—':f(x.run)}</td><td>${x.y25?`${(x.need/n/x.y25).toFixed(0)}×`:'—'}</td></tr>`).join('');
   document.querySelector('#cxTable tfoot').innerHTML=`<tr><td>Total</td><td>${fmtB(total)}</td><td>${fmtB(total/n)}</td><td>$20.7B</td><td>${f(NOW.run.total)}</td><td>${(total/n/20.7).toFixed(0)}×</td></tr>`;
   const all=[...rows,{name:'Total',col:'--ink',need:total,y25:20.7,run:NOW.run.total}];
   const maxV=Math.max(total/n, NOW.hyper)*1.25, L=150, W=830, x=v=>L+W*v/maxV, rh=54;
