@@ -10,7 +10,7 @@
 <style>
 :root{
   --paper:#EEF1F4; --panel:#F8FAFC; --ink:#14213D; --muted:#56657C; --rule:#C9D2DD;
-  --c-ai:#2E4BD8; --c-con:#138A77; --c-space:#C98A00; --c-xg:#7E8499;
+  --c-ai:#2E4BD8; --c-con:#138A77; --c-space:#C98A00; --c-xg:#7E8499; --c-mob:#B5469B;
   --signal:#C8374B; --focus:#2E4BD8;
   --sans:"Archivo", "Helvetica Neue", Arial, sans-serif;
   --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
@@ -21,12 +21,12 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --paper:#0F1726; --panel:#162033; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3850;
-    --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --signal:#FF6B7F; --focus:#8FA2FF;
+    --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --c-mob:#E079C4; --signal:#FF6B7F; --focus:#8FA2FF;
   }
 }
 :root[data-theme="dark"]{
   --paper:#0F1726; --panel:#162033; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3850;
-  --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --signal:#FF6B7F; --focus:#8FA2FF;
+  --c-ai:#6F86FF; --c-con:#35C2A9; --c-space:#E9B23A; --c-xg:#A3A9BC; --c-mob:#E079C4; --signal:#FF6B7F; --focus:#8FA2FF;
 }
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -75,9 +75,6 @@ th{font-weight:600;color:var(--muted)}
 td:first-child,th:first-child{text-align:left}
 .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:0}
 tfoot td{font-weight:700;border-bottom:2px solid var(--ink)}
-.sens{flex:1 1 360px}
-.sens td.cur{outline:2px solid var(--ink);outline-offset:-2px;font-weight:700}
-.sens caption{text-align:left;font-weight:650;padding-bottom:6px}
 .note{font-size:13px;color:var(--muted)}
 
 /* segments */
@@ -133,7 +130,7 @@ ol.refs li{margin-bottom:4px}
   </nav>
 
   <h1>SPCX sum-of-the-parts</h1>
-  <p class="lede">Rebuilt from Morgan Stanley's $300 base case (Adam Jonas, reiterated Sept 20, 2026). MS disclosed only the per-share value of each segment. The driver inputs below are reverse-engineered to reproduce those values, except connected devices, which start at a more conservative 50M. “Match MS” restores Morgan Stanley's $300. Every input can be changed.</p>
+  <p class="lede">Rebuilt from Morgan Stanley's $300 base case (Adam Jonas, reiterated Sept 20, 2026). MS disclosed only the per-share value of each segment. The driver inputs below are reverse-engineered to reproduce those values, except connected devices, which start at a more conservative 50M. Starlink Mobile is an added segment that MS does not break out (it may sit inside the $118 Connectivity value), so it is also reverse-engineered, from spectrum purchases and carrier benchmarks. “Match MS” restores Morgan Stanley's $300 by setting Starlink Mobile's probability to 0%. Every input can be changed.</p>
 
   <div class="hero" aria-label="Per-share value by segment compared with market price and Morgan Stanley's target">
     <svg id="ruler" viewBox="0 0 1000 150" role="img"></svg>
@@ -164,10 +161,6 @@ ol.refs li{margin-bottom:4px}
       <div class="scroll" style="flex:1 1 220px">
         <table id="legend"><thead><tr><th>Segment</th><th>$/share</th><th>Equity value</th><th>MS</th></tr></thead><tbody></tbody><tfoot></tfoot></table>
       </div>
-    </div>
-    <div class="sens scroll">
-      <table id="sens"><caption>Total $/share by discount rate (rows) and terminal growth (columns)</caption><thead></thead><tbody></tbody></table>
-      <p class="note">Outlined cell is the current setting. Other inputs held fixed.</p>
     </div>
   </div>
 
@@ -206,7 +199,7 @@ ol.refs li{margin-bottom:4px}
     <p>Each segment reaches a steady state in horizon year <span class="var">T</span>, is capitalized with a Gordon growth terminal value, and is discounted to the price-target date <span class="var">t</span><sub>0</sub> = 2027 (MS's target is 12-month forward):</p>
     <p class="eq">V<sub>seg</sub> = p · FCF<sub>T</sub> · (1+g) / [ (r − g) · (1+r)<sup>T − t₀</sup> ] ÷ N</p>
     <p>Here <span class="var">p</span> is the probability of success and <span class="var">N</span> is diluted shares. Interim cash flows before <span class="var">T</span> are set to zero, a simplification consistent with heavy build-out capex. HSBC, for example, sees positive free cash flow only from 2030. Net cash and debt are excluded because MS's four components sum to $299 with no separate balance-sheet line. Only Starship external launches count toward Space. Launches carrying SpaceX's own Starlink or compute payloads are costs of the other segments.</p>
-    <p>What is disclosed and what is inferred: the segment $/share values ($165, $118, $8, $8), the ~5,800 Starship launches/yr by 2040, the Cursor ARR path, and the $600 bull case are from MS as reported. Every other default is a calibration, not a disclosed MS input. The share count is the $1.77T IPO valuation divided by the $135 IPO price.</p>
+    <p>What is disclosed and what is inferred: the segment $/share values ($165, $118, $8, $8), the ~5,800 Starship launches/yr by 2040, the Cursor ARR path, and the $600 bull case are from MS as reported. Starlink Mobile is not a disclosed MS segment at all: its subscriber, price, margin and probability inputs are my own calibration (about $3/share, ≈ $36B of equity, by default; FutureSearch's third-party estimate is $75B), and MS may already include mobile inside the $118 Connectivity value, so the default total can double count it. Every other default is a calibration, not a disclosed MS input. The share count is the $1.77T IPO valuation divided by the $135 IPO price.</p>
     <h3>Sources</h3>
     <ol class="refs">
       <li><a href="https://blockspace.media/insight/morgan-stanley-spacex-ai-valuation/" target="_blank" rel="noopener">Blockspace: MS SOTP breakdown ($165 / $118 / $8 / $8), Sept 20 note</a></li>
@@ -238,6 +231,10 @@ ol.refs li{margin-bottom:4px}
       <li><a href="https://pith.science/paper/2604.27197" target="_blank" rel="noopener">Pith Review: orbital data centers need 34–59 kg/kW</a></li>
       <li><a href="https://galratner.substack.com/p/florida-man-spots-data-centers-in" target="_blank" rel="noopener">Gal Ratner: ground AI builds $30–40M/MW, Epoch $38B/GW, JLL $11.3M/MW</a></li>
       <li><a href="https://spectrum.ieee.org/orbital-data-centers-heat" target="_blank" rel="noopener">IEEE Spectrum (ABI Research): orbital data-center cost and heat</a></li>
+      <li><a href="https://www.fierce-network.com/wireless/spacex-scoops-echostar-spectrum-17b" target="_blank" rel="noopener">Fierce Network: SpaceX buys EchoStar AWS-4 and H-block spectrum for ≈ $17B</a>. See also <a href="https://www.spacex.com/updates#starlink-mobile-spectrum" target="_blank" rel="noopener">SpaceX updates: Starlink Mobile spectrum</a> (script-rendered page that could not be read automatically; no figures here come from it)</li>
+      <li><a href="https://news.bgov.com/mergers-and-acquisitions/spacex-ast-said-seeking-to-buy-spectrum-valued-at-6-billion" target="_blank" rel="noopener">Bloomberg Government: Grain 800 MHz spectrum, ≈ $6B asking price</a></li>
+      <li><a href="https://futuresearch.ai/spacex-ipo-valuation/" target="_blank" rel="noopener">FutureSearch: Starlink Direct-to-Cell valued at ≈ $75B; T-Mobile D2C ≈ $10/mo add-on</a></li>
+      <li><a href="https://finance.yahoo.com/markets/stocks/articles/spacex-gets-buy-ratings-three-105249768.html" target="_blank" rel="noopener">Yahoo Finance: analyst ratings, Susquehanna on mobile</a></li>
     </ol>
     <p class="note">For study only, not investment advice. Market price defaults to the Sept 23, 2026 close.</p>
   </section>
@@ -332,6 +329,22 @@ const SEGS = [
     rev:s=>s.x+s.grok,
     fcf:s=>(s.x+s.grok)*s.m/100,
     revF:s=>`$${s.x}B + $${s.grok}B`,
+    fcfF:s=>`${s.m}% × revenue`},
+  {id:'mob', name:'Starlink Mobile (phone service)', ms:null, color:'--c-mob', params:[
+    {k:'subs', label:'Phone subscribers in year T', unit:'M', min:5, max:600, log:true, v:150,
+      marks:[{v:130,l:'T-Mobile US ≈ 130M'},{v:300,l:'US lines ≈ 400M'}],
+      ctx:s=>`Reverse-engineered, not an MS input. ${(s.subs/130).toFixed(1)}× T-Mobile US's customer base (≈ 130M, approx.). This is phone subscribers on a separate direct-to-device constellation plus terrestrial spectrum${sup(30)}${sup(31)}, not the broadband dish customers above. Starlink had no consumer phone plan at the time of writing.`},
+    {k:'arpu', label:'Revenue per subscriber', unit:'$/mo', min:3, max:80, step:1, v:15,
+      marks:[{v:10,l:'T-Mobile D2C add-on $10'},{v:45,l:'US wireless avg ≈ $45'}],
+      ctx:s=>`Mobile revenue: ${fmtB(s.subs*s.arpu*12/1000)}/yr. Direct-to-cell has so far sold as a ≈ $10/mo add-on to another carrier's plan${sup(32)}; a full carrier plan averages ≈ $45/mo in the US (approx.). The default blends wholesale (EchoStar's Boost Mobile) and retail.`},
+    {k:'m', label:'FCF margin', unit:'%', min:10, max:60, step:1, v:40,
+      marks:[{v:39,l:'Starlink 2025 op. margin'}],
+      ctx:s=>`Carriers run ≈ 15–25% free-cash-flow margins after spectrum and network capex (approx.); the default borrows Starlink's 39% operating margin${sup(12)} because the satellite network is asset-light per subscriber. Each 5 pts moves value ${d$(dS('mob','m',5))}/share.`},
+    {k:'p', label:'Probability of success', unit:'%', min:0, max:100, step:5, v:60,
+      ctx:s=>`Each 10 pts moves value ${d$(dS('mob','p',-10))}/share. Needs the next-generation satellites (planned 2027) and FCC approval of pending spectrum purchases. Susquehanna rates mobile connectivity “less likely” than broadband${sup(33)}. “Match MS” sets this to 0%.`}],
+    rev:s=>s.subs*s.arpu*12/1000,
+    fcf:s=>s.subs*s.arpu*12/1000*s.m/100,
+    revF:s=>`${s.subs}M × $${s.arpu} × 12`,
     fcfF:s=>`${s.m}% × revenue`}
 ];
 
@@ -350,6 +363,10 @@ const CAPEX = [
     ctx:()=>`2025: $4.2B of Connectivity capex${sup(17)} added ≈ $3.8B of revenue ($7.6B → $11.4B, from 49.8% growth${sup(20)}), ≈ 1.1×. Needed: ${fmtB(cxReq().con)}.`},
   {id:'space', k:'perLaunch', label:'Starship capex per launch a year of capacity', unit:'$M', min:1, max:50, step:1, v:10,
     ctx:()=>`${S.space.launch.toLocaleString()} launches/yr × $${C.space_perLaunch}M = ${fmtB(cxReq().space)} for vehicles, pads and propellant plants (approx. input). Pivotal's thesis needs each Starship to fly 20–50 times with cheap turnaround.`},
+  {id:'mob', k:'K', label:'Starlink Mobile network capex per $1 of annual revenue', unit:'×', min:0.3, max:3, step:0.05, v:1.1,
+    ctx:()=>`Assumes the same capital intensity as Connectivity's 2025 ratio (approx. input), for next-generation satellites and ground network. Needed: ${fmtB(cxReq().mob)} including spectrum.`},
+  {id:'mob', k:'spec', label:'Spectrum purchases', unit:'$B', min:0, max:60, step:1, v:23,
+    ctx:()=>`EchoStar AWS-4 and H-block: ≈ $17B${sup(30)}. Grain 800 MHz: ≈ $6B asking price, not a confirmed price${sup(31)}. Added to the capex need once, not scaled by revenue.`},
   {id:'xg', k:'K', label:'X & Grok capex per $1 of added annual revenue', unit:'×', min:0, max:2, step:0.05, v:0.3,
     ctx:()=>`Low because Grok's training compute is counted under Enterprise AI. Needed: ${fmtB(cxReq().xg)}.`}
 ];
@@ -407,6 +424,7 @@ function cxReq(){ return {
   ai: Math.max(0,S.ai.gw-NOW.aiGW)*perGW(),
   con: Math.max(0,SEGS[1].rev(S.con)-NOW.slRev)*C.con_K,
   space: S.space.launch*C.space_perLaunch/1000,
+  mob: SEGS[4].rev(S.mob)*C.mob_K*S.mob.p/100 + C.mob_spec*S.mob.p/100,
   xg: Math.max(0,SEGS[3].rev(S.xg)-NOW.xgRev)*C.xg_K }; }
 
 const BULL = {ai:{gw:205, cm:50, sw:180}};
@@ -414,7 +432,7 @@ const BULL = {ai:{gw:205, cm:50, sw:180}};
 let G = {...GLOBAL_BASE};
 let S = {};
 function resetBase(){ G={...GLOBAL_BASE}; SEGS.forEach(sg=>{S[sg.id]={}; sg.params.forEach(p=>S[sg.id][p.k]=p.v);}); CAPEX.forEach(c=>C[c.id+'_'+c.k]=c.v); Object.assign(O,OPRE.base); }
-function applyMS(){ resetBase(); S.con.dev=1500; }
+function applyMS(){ resetBase(); S.con.dev=1500; S.mob.p=0; }
 function applyBull(){ applyMS(); Object.entries(BULL).forEach(([id,o])=>Object.assign(S[id],o)); }
 
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -482,10 +500,11 @@ function renderCapex(tot){
     {name:'Enterprise AI', col:'--c-ai', need:req.ai, y25:NOW.cx25.ai, run:NOW.run.ai},
     {name:'Connectivity', col:'--c-con', need:req.con, y25:NOW.cx25.con, run:null},
     {name:'Space', col:'--c-space', need:req.space, y25:NOW.cx25.space, run:null},
-    {name:'X & Grok', col:'--c-xg', need:req.xg, y25:null, run:null}];
+    {name:'Starlink Mobile', col:'--c-mob', need:req.mob, y25:null, run:null, inn:'in Connectivity'},
+    {name:'X & Grok', col:'--c-xg', need:req.xg, y25:null, run:null, inn:'in AI'}];
   const total=rows.reduce((a,x)=>a+x.need,0);
   const f=x=>x==null?'—':fmtB(x);
-  document.querySelector('#cxTable tbody').innerHTML=rows.map(x=>`<tr><td><span class="sw" style="background:var(${x.col})"></span>${x.name}</td><td>${fmtB(x.need)}</td><td>${fmtB(x.need/n)}</td><td>${x.y25==null?'in AI':f(x.y25)}</td><td>${x.run==null?'—':f(x.run)}</td><td>${x.y25?`${(x.need/n/x.y25).toFixed(0)}×`:'—'}</td></tr>`).join('');
+  document.querySelector('#cxTable tbody').innerHTML=rows.map(x=>`<tr><td><span class="sw" style="background:var(${x.col})"></span>${x.name}</td><td>${fmtB(x.need)}</td><td>${fmtB(x.need/n)}</td><td>${x.y25==null?x.inn:f(x.y25)}</td><td>${x.run==null?'—':f(x.run)}</td><td>${x.y25?`${(x.need/n/x.y25).toFixed(0)}×`:'—'}</td></tr>`).join('');
   document.querySelector('#cxTable tfoot').innerHTML=`<tr><td>Total</td><td>${fmtB(total)}</td><td>${fmtB(total/n)}</td><td>$20.7B</td><td>${f(NOW.run.total)}</td><td>${(total/n/20.7).toFixed(0)}×</td></tr>`;
   const all=[...rows,{name:'Total',col:'--ink',need:total,y25:20.7,run:NOW.run.total}];
   const maxV=Math.max(total/n, NOW.hyper)*1.25, L=150, W=830, x=v=>L+W*v/maxV, rh=54;
@@ -520,7 +539,7 @@ addEventListener('resize',()=>layoutMarks());
 const segBox=document.getElementById('segs');
 SEGS.forEach(sg=>{
   const el=document.createElement('section'); el.className='seg'; el.style.setProperty('--seg',`var(${sg.color})`);
-  el.innerHTML=`<div class="seg-head"><h2>${sg.name}</h2><div><span class="seg-val" id="v-${sg.id}"></span> <span class="seg-ms">MS: $${sg.ms}/share</span></div></div>
+  el.innerHTML=`<div class="seg-head"><h2>${sg.name}</h2><div><span class="seg-val" id="v-${sg.id}"></span> <span class="seg-ms">${sg.ms==null?'MS: not broken out':`MS: $${sg.ms}/share`}</span></div></div>
   <div class="grid">${sg.params.map(p=>`<div class="param"><div class="row"><label for="${sg.id}-${p.k}">${p.label}</label><output id="o-${sg.id}-${p.k}"></output></div>
   <input type="range" id="${sg.id}-${p.k}" min="${p.log?0:p.min}" max="${p.log?LOGN:p.max}" step="${p.log?1:p.step}">${marksHTML(p)}<div class="ctx" id="c-${sg.id}-${p.k}"></div></div>`).join('')}</div>
   <div class="flow" id="f-${sg.id}"></div>`;
@@ -580,10 +599,10 @@ function render(){
   });
 
   /* legend */
-  document.querySelector('#legend tbody').innerHTML=vals.map(v=>`<tr><td><span class="sw" style="background:var(${v.sg.color})"></span>${v.sg.name}</td><td>$${v.ps.toFixed(1)}</td><td>${fmtB(v.eq)}</td><td>$${v.sg.ms}</td></tr>`).join('');
+  document.querySelector('#legend tbody').innerHTML=vals.map(v=>`<tr><td><span class="sw" style="background:var(${v.sg.color})"></span>${v.sg.name}</td><td>$${v.ps.toFixed(1)}</td><td>${fmtB(v.eq)}</td><td>${v.sg.ms==null?'—':'$'+v.sg.ms}</td></tr>`).join('');
   document.querySelector('#legend tfoot').innerHTML=`<tr><td>Total</td><td>$${tot.toFixed(1)}</td><td>${fmtB(tot*G.sh)}</td><td>$299</td></tr>`;
 
-  drawDonut(vals,tot); drawRuler(vals,tot); drawSens(); drawImplied(tot); renderCapex(tot);
+  drawDonut(vals,tot); drawRuler(vals,tot); drawImplied(tot); renderCapex(tot);
 }
 
 function drawDonut(vals,tot){
@@ -611,12 +630,6 @@ function drawRuler(vals,tot){
   h+=mk(G.mkt,`Market $${G.mkt.toFixed(0)}`,css('--signal'),false,true);
   h+=mk(MS_PT,`MS target $${MS_PT}`,css('--ink'),true,false);
   document.getElementById('ruler').innerHTML=h;
-}
-
-function drawSens(){
-  const rs=[7,8,9,10,11], gs=[2,2.5,3,3.5,4];
-  document.querySelector('#sens thead').innerHTML=`<tr><th>r \\ g</th>${gs.map(g=>`<th>${g}%</th>`).join('')}</tr>`;
-  document.querySelector('#sens tbody').innerHTML=rs.map(r=>`<tr><th>${r}%</th>${gs.map(g=>{ const v=totalPS({...G,wacc:r,g}); const cur=Math.abs(r-G.wacc)<1e-9&&Math.abs(g-G.g)<1e-9; return `<td class="${cur?'cur':''}">$${v.toFixed(0)}</td>`;}).join('')}</tr>`).join('');
 }
 
 function drawImplied(tot){
